@@ -10,10 +10,10 @@ const REFRESH_TOKEN_TTL = 14 * 24 * 60 * 60 * 1000;
 
 export const register = async (req, res) => {
     try {
-        const { email, password, firstName, lastName } = req.body;
+        const { email, password, firstName, lastName, phone } = req.body;
 
         if (!email || !password || !firstName || !lastName) {
-            return res.status(400).json({ message: "All fields are required." });
+            return res.status(400).json({ message: "First name, last name, email, and password are required." });
         }
         const normalizedEmail = (email || "").trim().toLowerCase();
         if (!validator.isEmail(normalizedEmail)) {
@@ -21,22 +21,46 @@ export const register = async (req, res) => {
         }
 
         const duplicate = await User.findOne({ email: normalizedEmail });
-
         if (duplicate) {
             return res.status(409).json({ message: "Email already exist!" });
         }
 
         const hashPassword = await bcrypt.hash(password, 10);
 
+        const displayName = `${(lastName || "").trim()} ${(firstName || "").trim()}`.trim();
         const user = await User.create({
             email: normalizedEmail,
             password: hashPassword,
-            name: `${lastName} ${firstName}`.trim(),
+            displayName,
+            phone: (phone || "").trim(),
+        });
+
+        const accessToken = jwt.sign({ userId: user._id }, process.env.ACCESS_TOKEN_SECRET, {
+            expiresIn: ACCESS_TOKEN_TTL,
+        });
+
+        const refreshToken = crypto.randomBytes(64).toString("hex");
+        await Session.create({
+            userId: user._id,
+            refreshToken,
+            expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL),
+        });
+
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "none",
+            maxAge: REFRESH_TOKEN_TTL,
         });
 
         return res.status(201).json({
-            message: "Register success",
-            user: { id: user._id, email: user.email, name: user.name },
+            token: accessToken,
+            user: {
+                id: user._id,
+                email: user.email,
+                displayName: user.displayName,
+                roles: user.roles || [],
+            },
         });
     } catch (error) {
         console.error(error);
@@ -57,7 +81,10 @@ export const login = async (req, res) => {
             return res.status(400).json({ message: "Invalid email!" });
         }
 
-        const user = await User.findOne({ email: normalizedEmail });
+        const user = await User.findOne({ email: normalizedEmail }).populate({
+            path: "roles",
+            select: "_id",
+        });
         if (!user) {
             return res.status(401).json({ message: "Email or password is incorrect" });
         }
@@ -90,7 +117,16 @@ export const login = async (req, res) => {
         });
 
         //return jwt token in response body        
-        return res.status(200).json({ message: `User ${user.name} signed in successfully`, accessToken });
+        const roles = (user.roles || []).map((role) => role._id);
+        return res.status(200).json({
+            token: accessToken,
+            user: {
+                id: user._id,
+                email: user.email,
+                displayName: user.displayName,
+                roles,
+            },
+        });
     } catch (error) {
         console.error("login error", error);
         return res.status(500).json({ message: "Internal server error" });
@@ -134,6 +170,15 @@ export const refreshToken = async (req, res) => {
         return res.status(200).json({ accessToken });
     } catch (error) {
         console.error("refreshToken error", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const me = async (req, res) => {
+    try {
+        return res.status(200).json({ user: req.user });
+    } catch (error) {
+        console.error("me error", error);
         return res.status(500).json({ message: "Internal server error" });
     }
 };

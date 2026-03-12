@@ -14,11 +14,15 @@ const orderItemSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const computeItemsPrice = (items = []) =>
+  items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
+
 const orderSchema = new mongoose.Schema(
   {
     orderNumber: { type: String, required: true, unique: true, trim: true },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     items: { type: [orderItemSchema], default: [] },
+    itemsPrice: { type: Number, required: true, min: 0, default: 0 },
     totalPrice: { type: Number, required: true, min: 0 },
     shippingFee: { type: Number, default: 0, min: 0 },
     discount: { type: Number, default: 0, min: 0 },
@@ -39,6 +43,15 @@ const orderSchema = new mongoose.Schema(
   },
   { timestamps: true, versionKey: false }
 );
+
+orderSchema.pre('validate', function (next) {
+  const itemsPrice = computeItemsPrice(this.items);
+  this.itemsPrice = Math.max(0, itemsPrice);
+  const shippingFee = Number(this.shippingFee || 0);
+  const discount = Number(this.discount || 0);
+  this.totalPrice = Math.max(0, this.itemsPrice + shippingFee - discount);
+  next();
+});
 
 orderSchema.index({ orderNumber: 1 }, { unique: true });
 orderSchema.index({ userId: 1, createdAt: -1 });
