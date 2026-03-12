@@ -8,7 +8,6 @@ const roleSchema = new mongoose.Schema(
   { timestamps: true, versionKey: false }
 );
 
-roleSchema.index({ name: 1 }, { unique: true });
 roleSchema.index({ permissions: 1 });
 
 export default mongoose.model('Role', roleSchema);
