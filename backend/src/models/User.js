@@ -16,13 +16,12 @@ const userSchema = new mongoose.Schema(
         district: { type: String, trim: true },
         ward: { type: String, trim: true },
         isDefault: { type: Boolean, default: false },
-      },  
+      },
     ],
   },
   { timestamps: true, versionKey: false }
 );
 
-userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ roles: 1 });
 
 export default mongoose.model('User', userSchema);

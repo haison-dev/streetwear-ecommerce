@@ -6,6 +6,9 @@ import authRoute from "./routes/authRoute.js";
 import userRoute from "./routes/userRoute.js";
 import adminUserRoute from "./routes/adminUserRoute.js";
 import rbacRoute from "./routes/rbacRoute.js";
+import categoryRoute from "./routes/categoryRoute.js";
+import brandRoute from "./routes/brandRoute.js";
+import productRoute from "./routes/productRoute.js";
 import { connectDB } from "./libs/db.js";
 import { protectedRoute } from "./middleware/authMiddleware.js";
 dotnet.config();
@@ -25,6 +28,9 @@ app.use(
 
 //public routes
 app.use("/api/auth", authRoute);
+app.use("/api/categories", categoryRoute);
+app.use("/api/brands", brandRoute);
+app.use("/api/products", productRoute);
 
 //private routes
 app.use(protectedRoute);
