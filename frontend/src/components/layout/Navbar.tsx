@@ -128,7 +128,7 @@ const Navbar = () => {
 
               {/* Right category cards */}
               <div className="flex-1 grid grid-cols-5 gap-3">
-                {shopCategoryCards.map((cat, i) => (
+                {shopCategoryCards.map((cat) => (
                   <Link
                     key={cat.id}
                     to={`/shop?categoryId=${cat.id}`}
