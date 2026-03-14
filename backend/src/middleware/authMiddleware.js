@@ -42,7 +42,7 @@ export const protectedRoute = async (req, res, next) => {
   }
 };
 
-export const authorize = (action, resource) => (req, res, next) => {
+export const authorize = (resource, action) => (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ message: "Unauthorized" });
   }

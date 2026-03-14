@@ -9,6 +9,7 @@ import rbacRoute from "./routes/rbacRoute.js";
 import categoryRoute from "./routes/categoryRoute.js";
 import brandRoute from "./routes/brandRoute.js";
 import productRoute from "./routes/productRoute.js";
+import uploadRoute from "./routes/uploadRoute.js";
 import { connectDB } from "./libs/db.js";
 import { protectedRoute } from "./middleware/authMiddleware.js";
 dotnet.config();
@@ -37,6 +38,8 @@ app.use(protectedRoute);
 app.use("/api/users", userRoute);
 app.use("/api/admin/users", adminUserRoute);
 app.use("/api/admin", rbacRoute);
+app.use("/api/uploads", uploadRoute);
+
 
 connectDB().then(() => {
   app.listen(PORT, () => {
