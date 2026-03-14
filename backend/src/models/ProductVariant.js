@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const productVariantSchema = new mongoose.Schema(
   {
     productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true, index: true },
-    size: { type: Number, required: true },
+    size: { type: String, required: true, enum: ['S', 'M', 'L', 'XL', 'XXL'] },
     color: { type: String, required: true, trim: true },
     sku: { type: String, required: true, unique: true, trim: true },
     stock: { type: Number, required: true, min: 0, default: 0 },
