@@ -1,19 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Star, Minus, Plus, ChevronRight } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { getProductBySlug } from '@/lib/mock-data';
-
+import { useProductDetailQuery } from '@/hooks/useProductDetailQuery';
 const ProductDetail = () => {
-  const { slug } = useParams<{ slug: string }>();
-  const product = getProductBySlug(slug || '');
+  const { slug } = useParams();
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const {data: product, isLoading, isError} = useProductDetailQuery(slug)
 
-  if (!product) {
+  if(isLoading) return <div>Loading...</div>
+
+  if (!product || isError) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -25,16 +26,26 @@ const ProductDetail = () => {
     );
   }
 
-  const selectedVariantData = product.variants.find(v => v._id === selectedVariant);
+  const variants = product.variants || [];
+  const selectedVariantData = variants.find(v => v._id === selectedVariant);
+  const available = selectedVariantData?.inventory?.available ?? selectedVariantData?.stock ?? 0;
+
+  useEffect(() => {
+    if (!available) return;
+    setQuantity(q => Math.min(q, available));
+  }, [available]);
+
+  const increaseQty = () => {
+    setQuantity(q => Math.min(q + 1, available || 1));
+  };
+
+  const decreaseQty = () => {
+    setQuantity(q => Math.max(1, q - 1));
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-
-      {/* Promo bar */}
-      <div className="bg-foreground text-background text-center py-2 font-body text-sm tracking-wider mt-16">
-        GET 10% OFF
-      </div>
 
       <div className="mx-auto w-full max-w-[1200px] px-4 md:px-8 py-8">
         {/* Breadcrumb */}
@@ -134,26 +145,29 @@ const ProductDetail = () => {
             <div>
               <h3 className="font-body text-sm font-semibold mb-3">Size</h3>
               <div className="flex flex-wrap gap-2">
-                {product.variants.map(variant => (
+                {variants.map(variant => {
+                  const inStock = (variant.inventory?.available ?? variant.stock ?? 0) > 0;
+                  return (
                   <button
                     key={variant._id}
                     onClick={() => setSelectedVariant(variant._id)}
-                    disabled={variant.inventory.available === 0}
+                    disabled={!inStock}
                     className={`px-5 py-2.5 rounded-lg border font-body text-sm transition-colors ${
                       selectedVariant === variant._id
                         ? 'border-foreground bg-foreground text-background'
-                        : variant.inventory.available === 0
+                        : !inStock
                         ? 'border-border text-muted-foreground opacity-40 cursor-not-allowed'
                         : 'border-border hover:border-foreground'
                     }`}
                   >
                     {variant.size}
                   </button>
-                ))}
+                );
+                })}
               </div>
               {selectedVariantData && (
                 <p className="font-body text-xs text-muted-foreground mt-2">
-                  {selectedVariantData.inventory.available} in stock
+                  {available} in stock
                 </p>
               )}
             </div>
@@ -162,14 +176,15 @@ const ProductDetail = () => {
             <div className="flex items-center gap-3">
               <div className="flex items-center border border-border rounded-lg">
                 <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  onClick={decreaseQty}
                   className="p-3 hover:bg-secondary transition-colors"
                 >
                   <Minus size={16} />
                 </button>
                 <span className="px-4 font-body text-sm min-w-[3rem] text-center">{quantity}</span>
                 <button
-                  onClick={() => setQuantity(quantity + 1)}
+                  onClick={increaseQty}
+                  disabled={!!selectedVariantData && quantity >= available}
                   className="p-3 hover:bg-secondary transition-colors"
                 >
                   <Plus size={16} />

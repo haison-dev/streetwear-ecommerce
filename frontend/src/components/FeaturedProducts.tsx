@@ -1,9 +1,10 @@
 import { motion } from 'framer-motion';
 import ProductCard from './ProductCard';
-import { products } from '@/lib/mock-data';
+import { useFeaturedProductsQuery } from '@/hooks/useFeaturedProductsQuery';
 
 const FeaturedProducts = () => {
-  const featured = products.slice(0, 4);
+  const { data, isLoading, isError } = useFeaturedProductsQuery();
+  const featured = data?.products || [];
 
   return (
     <section className="py-20 px-6 md:px-12 lg:px-20 xl:px-28 bg-secondary">
@@ -17,11 +18,21 @@ const FeaturedProducts = () => {
           TRENDING NOW
         </motion.h2>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {featured.map((product, i) => (
-            <ProductCard key={product._id} product={product} index={i} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="py-8 text-center">
+            <p className="font-body text-sm text-muted-foreground">Loading products...</p>
+          </div>
+        ) : isError ? (
+          <div className="py-8 text-center">
+            <p className="font-body text-sm text-muted-foreground">Failed to load products</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {featured.map((product, i) => (
+              <ProductCard key={product._id} product={product} index={i} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

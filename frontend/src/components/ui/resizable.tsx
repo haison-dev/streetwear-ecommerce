@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 
 function ResizablePanelGroup({
   className,
-  ...props
+    ...props
 }: ResizablePrimitive.PanelGroupProps) {
   return (
     <ResizablePrimitive.PanelGroup

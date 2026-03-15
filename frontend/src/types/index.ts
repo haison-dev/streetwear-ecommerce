@@ -27,7 +27,7 @@ export interface Product {
 export interface Variant {
   _id: string;
   productId: string;
-  size: number;
+  size: string;
   color: string;
   sku: string;
   stock: number;
