@@ -25,6 +25,7 @@ export interface AuthUserLite {
   email: string;
   displayName?: string;
   roles: string[];
+  roleNames?: string[];
 }
 
 export interface AuthUser {

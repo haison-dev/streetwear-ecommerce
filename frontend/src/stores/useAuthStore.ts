@@ -14,9 +14,15 @@ export const useAuthStore = create<AuthState>()(
       login: async (email, password) => {
         try {
           set({ loading: true });
-          const { data } = await authService.login(email, password);
+          const data = await authService.login(email, password);
           set({ token: data.token, user: data.user });
-          toast.success("Logic successfully");
+          try {
+            const me = await authService.me();
+            if (me?.user) set({ user: me.user });
+          } catch (meError) {
+            console.error("fetchMe after login failed", meError);
+          }
+          toast.success("Login successful");
         } catch (error) {
           console.error(error);
           toast.error("Login failed");
@@ -28,9 +34,9 @@ export const useAuthStore = create<AuthState>()(
       register: async (email, password, firstName, lastName, phone) => {
         try {
           set({ loading: true });
-          const { data } = await authService.register(email, password, firstName, lastName, phone);
+          const data = await authService.register(email, password, firstName, lastName, phone);
           set({ token: data.token, user: data.user });
-          toast.success("Register Ok");
+          toast.success("Register ok");
         } catch (error) {
           console.error(error);
           toast.error("Register failed");

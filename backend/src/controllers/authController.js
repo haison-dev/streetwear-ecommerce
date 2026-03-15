@@ -83,7 +83,7 @@ export const login = async (req, res) => {
 
         const user = await User.findOne({ email: normalizedEmail }).populate({
             path: "roles",
-            select: "_id",
+            select: "_id name",
         });
         if (!user) {
             return res.status(401).json({ message: "Email or password is incorrect" });
@@ -118,6 +118,9 @@ export const login = async (req, res) => {
 
         //return jwt token in response body        
         const roles = (user.roles || []).map((role) => role._id);
+        const roleNames = (user.roles || [])
+            .map((role) => (role?.name || "").toString().toLowerCase())
+            .filter(Boolean);
         return res.status(200).json({
             token: accessToken,
             user: {
@@ -125,6 +128,7 @@ export const login = async (req, res) => {
                 email: user.email,
                 displayName: user.displayName,
                 roles,
+                roleNames,
             },
         });
     } catch (error) {

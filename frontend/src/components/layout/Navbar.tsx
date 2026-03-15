@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, ShoppingBag, Menu, X } from 'lucide-react';
+import { Search, ShoppingBag, Menu, X, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import LoginPanel from '@/components/auth/LoginPanel';
 
 import productVinyl1 from '@/assets/product-vinyl-1.jpg';
 import productTee1 from '@/assets/product-tee-1.jpg';
@@ -28,6 +29,7 @@ const shopLinks = [
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleShopEnter = () => {
@@ -41,9 +43,9 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
-      <div className="flex items-center justify-between h-16 px-6 lg:px-12">
+      <div className="flex items-center h-16 px-6 lg:px-12">
         {/* Left nav */}
-        <div className="hidden md:flex items-center gap-8 font-body text-sm tracking-wide">
+        <div className="hidden md:flex items-center gap-8 font-body text-sm tracking-wide flex-1">
           <Link to="/" className="hover:opacity-60 transition-opacity">Home</Link>
           <div
             className="relative"
@@ -67,12 +69,14 @@ const Navbar = () => {
         </button>
 
         {/* Center logo */}
-        <Link to="/" className="absolute left-1/2 -translate-x-1/2 font-display text-3xl tracking-wider">
-          CROWNLINE
-        </Link>
+        <div className="flex-1 flex justify-center">
+          <Link to="/" className="font-display text-3xl tracking-wider">
+            CROWNLINE
+          </Link>
+        </div>
 
         {/* Right icons */}
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-5 flex-1 justify-end">
           <Link to="/shop" className="hover:opacity-60 transition-opacity">
             <Search size={20} />
           </Link>
@@ -81,6 +85,13 @@ const Navbar = () => {
             <span className="absolute -top-1.5 -right-1.5 bg-foreground text-background text-[10px] font-body font-semibold rounded-full w-4 h-4 flex items-center justify-center">
               0
             </span>
+          </button>
+          <button
+            onClick={() => setLoginOpen(true)}
+            className="hover:opacity-60 transition-opacity"
+            aria-label="Open login panel"
+          >
+            <User size={20} />
           </button>
         </div>
       </div>
@@ -169,6 +180,8 @@ const Navbar = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <LoginPanel open={loginOpen} onClose={() => setLoginOpen(false)} />
     </nav>
   );
 };

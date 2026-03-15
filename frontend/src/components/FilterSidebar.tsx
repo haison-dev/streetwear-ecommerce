@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
-import { categories, brands, filtersData } from '@/lib/mock-data';
 import { Star } from 'lucide-react';
+import type { Brand, Category } from '@/types';
 
 interface FilterState {
   categoryId: string;
@@ -12,15 +12,21 @@ interface FilterState {
 
 interface Props {
   filters: FilterState;
+  categories: Category[];
+  brands: Brand[];
+  stats: {
+    minPrice: number;
+    maxPrice: number;
+  };
   onChange: (filters: FilterState) => void;
 }
 
-const FilterSidebar = ({ filters, onChange }: Props) => {
+const FilterSidebar = ({ filters, categories, brands, stats, onChange }: Props) => {
   const activeCount = [
     filters.categoryId,
     filters.brandId,
-    filters.minPrice > filtersData.stats.minPrice ? 'price' : '',
-    filters.maxPrice < filtersData.stats.maxPrice ? 'price2' : '',
+    filters.minPrice > stats.minPrice ? 'price' : '',
+    filters.maxPrice < stats.maxPrice ? 'price2' : '',
     filters.minRating > 0 ? 'rating' : '',
   ].filter(Boolean).length;
 
@@ -100,8 +106,8 @@ const FilterSidebar = ({ filters, onChange }: Props) => {
           </div>
           <input
             type="range"
-            min={filtersData.stats.minPrice}
-            max={filtersData.stats.maxPrice}
+            min={stats.minPrice}
+            max={stats.maxPrice}
             value={filters.maxPrice}
             onChange={e => onChange({ ...filters, maxPrice: Number(e.target.value) })}
             className="w-full accent-foreground"
@@ -131,7 +137,7 @@ const FilterSidebar = ({ filters, onChange }: Props) => {
       {/* Clear */}
       {activeCount > 0 && (
         <button
-          onClick={() => onChange({ categoryId: '', brandId: '', minPrice: filtersData.stats.minPrice, maxPrice: filtersData.stats.maxPrice, minRating: 0 })}
+          onClick={() => onChange({ categoryId: '', brandId: '', minPrice: stats.minPrice, maxPrice: stats.maxPrice, minRating: 0 })}
           className="font-body text-xs underline text-muted-foreground hover:text-foreground transition-colors"
         >
           Clear all filters
