@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useNavigate } from "react-router-dom";
+import { getRoleNames } from "@/lib/roles";
 import googleLogo from "@/assets/google-logo.webp";
 
 interface Props {
@@ -23,17 +24,7 @@ const LoginPanel = ({ open, onClose }: Props) => {
     if (!token || !open) return;
     const roleNames = Array.isArray(user?.roleNames) && user.roleNames.length
       ? user.roleNames.map((r) => String(r).toLowerCase())
-      : Array.isArray(user?.roles)
-      ? user.roles
-          .map((r) => {
-            if (typeof r === "string") return r.toLowerCase();
-            if (r && typeof r === "object" && "name" in r) {
-              return String((r as { name?: string }).name || "").toLowerCase();
-            }
-            return "";
-          })
-          .filter(Boolean)
-      : [];
+      : getRoleNames(user?.roles);
     if (roleNames.includes("admin")) {
       navigate("/dashboard/admin", { replace: true });
     } else if (roleNames.includes("staff")) {
@@ -142,6 +133,10 @@ const LoginPanel = ({ open, onClose }: Props) => {
                 </p>
                   <button
                     type="button"
+                    onClick={() => {
+                      onClose();
+                      navigate("/register");
+                    }}
                     className="w-full h-11 rounded-full border border-border font-body text-sm hover:bg-secondary transition-colors"
                   >
                     Create my account

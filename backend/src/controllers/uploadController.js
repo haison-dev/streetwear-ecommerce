@@ -1,9 +1,11 @@
 import cloudinary from "../libs/cloudinary.js";
 
+const CLOUDINARY_UPLOAD_TIMEOUT_MS = Number(process.env.CLOUDINARY_UPLOAD_TIMEOUT_MS || 60000);
+
 const uploadBuffer = (buffer, options = {}) =>
   new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      { resource_type: "image", ...options },
+      { resource_type: "image", timeout: CLOUDINARY_UPLOAD_TIMEOUT_MS, ...options },
       (error, result) => {
         if (error) return reject(error);
         return resolve(result);
@@ -11,6 +13,26 @@ const uploadBuffer = (buffer, options = {}) =>
     );
     stream.end(buffer);
   });
+
+const isTimeoutError = (error) =>
+  error?.name === "TimeoutError" ||
+  error?.http_code === 499 ||
+  /timeout/i.test(String(error?.message || ""));
+
+const uploadWithRetry = async (buffer, options = {}, maxRetries = 1) => {
+  let lastError;
+  for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+    try {
+      return await uploadBuffer(buffer, options);
+    } catch (error) {
+      lastError = error;
+      if (!isTimeoutError(error) || attempt === maxRetries) {
+        throw error;
+      }
+    }
+  }
+  throw lastError;
+};
 
 export const uploadImages = async (req, res) => {
   try {
@@ -20,7 +42,7 @@ export const uploadImages = async (req, res) => {
 
     const folder = req.body?.folder || "e-commerce/products";
     const uploads = await Promise.all(
-      req.files.map((file) => uploadBuffer(file.buffer, { folder }))
+      req.files.map((file) => uploadWithRetry(file.buffer, { folder }))
     );
 
     const images = uploads.map((item) => ({
@@ -35,9 +57,12 @@ export const uploadImages = async (req, res) => {
     return res.status(201).json({ images });
   } catch (error) {
     console.error("uploadImages error", error);
-    return res.status(500).json({
+    const timeout = isTimeoutError(error);
+    return res.status(timeout ? 504 : 500).json({
       message: "Image upload failed",
-      error: error?.message || "Unknown error",
+      error: timeout
+        ? "Cloud upload timeout. Please try again with a smaller image or check network."
+        : error?.message || "Unknown error",
     });
   }
 };

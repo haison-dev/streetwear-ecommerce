@@ -16,6 +16,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { TerminalSquareIcon, BotIcon, BookOpenIcon, Settings2Icon, LifeBuoyIcon, SendIcon, FrameIcon, PieChartIcon, MapIcon, TerminalIcon } from "lucide-react"
+import { useAuthStore } from "@/stores/useAuthStore"
 
 export type SidebarData = {
   user: {
@@ -197,6 +198,15 @@ export function AppSidebar({
   data = defaultData,
   ...props
 }: React.ComponentProps<typeof Sidebar> & { data?: SidebarData }) {
+  const authUser = useAuthStore((state) => state.user)
+  const resolvedUser = authUser
+    ? {
+        name: authUser.displayName ?? authUser.email ?? "User",
+        email: authUser.email ?? "",
+        avatar: data.user.avatar,
+      }
+    : data.user
+
   return (
     <Sidebar variant="inset" collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -208,7 +218,7 @@ export function AppSidebar({
                   <TerminalIcon className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">Acme Inc</span>
+                  <span className="truncate font-medium">Crownline</span>
                   <span className="truncate text-xs">Enterprise</span>
                 </div>
               </a>
@@ -222,7 +232,7 @@ export function AppSidebar({
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={resolvedUser} />
       </SidebarFooter>
     </Sidebar>
   )

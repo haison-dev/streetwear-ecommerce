@@ -75,7 +75,7 @@ export const listProducts = async (req, res) => {
         .skip(skip)
         .limit(safeLimit)
         .populate({ path: "brandId", select: "name slug logo" })
-        .populate({ path: "categoryId", select: "name slug" })
+        .populate({ path: "categoryId", select: "name slug image" })
         .lean(),
       Product.countDocuments(filter),
     ]);
@@ -97,7 +97,7 @@ export const getProductById = async (req, res) => {
 
     const product = await Product.findById(id)
       .populate({ path: "brandId", select: "name slug logo" })
-      .populate({ path: "categoryId", select: "name slug" })
+      .populate({ path: "categoryId", select: "name slug image" })
       .lean();
     if (!product) return res.status(404).json({ message: "Product not found" });
 
@@ -130,7 +130,7 @@ export const getProductBySlug = async (req, res) => {
 
     const product = await Product.findOne({ slug })
       .populate({ path: "brandId", select: "name slug logo" })
-      .populate({ path: "categoryId", select: "name slug" })
+      .populate({ path: "categoryId", select: "name slug image" })
       .lean();
     if (!product) return res.status(404).json({ message: "Product not found" });
 
