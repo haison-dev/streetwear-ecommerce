@@ -1,8 +1,16 @@
 import { useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, ShoppingBag, Menu, X, User } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search, ShoppingBag, Menu, X, User, ChevronDown, LogOut, UserRound } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import LoginPanel from '@/components/auth/LoginPanel';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { getRoleNames } from '@/lib/roles';
 
 import productVinyl1 from '@/assets/product-vinyl-1.jpg';
 import productTee1 from '@/assets/product-tee-1.jpg';
@@ -27,10 +35,19 @@ const shopLinks = [
 ];
 
 const Navbar = () => {
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { token, user, logout } = useAuthStore();
+
+  const isLoggedIn = Boolean(token && user);
+  const displayName = user?.displayName || user?.email || 'Account';
+  const roleNames = getRoleNames(user?.roles);
+  const profilePath = roleNames.includes('staff')
+    ? '/dashboard/staff/account'
+    : '/dashboard/admin/account';
 
   const handleShopEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -59,8 +76,6 @@ const Navbar = () => {
               Shop
             </Link>
           </div>
-          <span className="hover:opacity-60 transition-opacity cursor-pointer">News</span>
-          <span className="hover:opacity-60 transition-opacity cursor-pointer">Contact</span>
         </div>
 
         {/* Mobile hamburger */}
@@ -86,13 +101,50 @@ const Navbar = () => {
               0
             </span>
           </button>
-          <button
-            onClick={() => setLoginOpen(true)}
-            className="hover:opacity-60 transition-opacity"
-            aria-label="Open login panel"
-          >
-            <User size={20} />
-          </button>
+          {isLoggedIn ? (
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm font-body hover:bg-secondary transition-colors"
+                  aria-label="Open user menu"
+                >
+                  <span className="max-w-32 truncate">{displayName}</span>
+                  <ChevronDown size={16} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" sideOffset={8} className="w-44">
+                <DropdownMenuItem
+                  onSelect={() => {
+                    navigate(profilePath);
+                  }}
+                >
+                  <UserRound className="size-4" />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => {
+                    void (async () => {
+                      await logout();
+                      navigate('/', { replace: true });
+                    })();
+                  }}
+                >
+                  <LogOut className="size-4" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <button
+              onClick={() => setLoginOpen(true)}
+              className="hover:opacity-60 transition-opacity"
+              aria-label="Open login panel"
+            >
+              <User size={20} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -108,13 +160,6 @@ const Navbar = () => {
             onMouseEnter={handleShopEnter}
             onMouseLeave={handleShopLeave}
           >
-            {/* Close button */}
-            <button
-              onClick={() => setShopOpen(false)}
-              className="absolute top-4 left-1/2 -translate-x-1/2 w-8 h-8 flex items-center justify-center rounded-full bg-secondary hover:bg-border transition-colors"
-            >
-              <X size={16} />
-            </button>
 
             <div className="px-6 lg:px-12 pt-10 pb-8 flex gap-10">
               {/* Left links */}

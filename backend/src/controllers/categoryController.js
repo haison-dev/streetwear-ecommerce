@@ -74,7 +74,7 @@ export const getCategoryBySlug = async (req, res) => {
 
 export const createCategory = async (req, res) => {
   try {
-    const { name, slug, parentId, status } = req.body || {};
+    const { name, slug, image, parentId, status } = req.body || {};
     const cleanName = normalizeString(name);
     if (!cleanName) return res.status(400).json({ message: "Name is required" });
 
@@ -90,6 +90,7 @@ export const createCategory = async (req, res) => {
     const category = await Category.create({
       name: cleanName,
       slug: finalSlug,
+      image: typeof image === "string" ? normalizeString(image) : "",
       parentId: parent,
       status,
     });
@@ -107,12 +108,13 @@ export const createCategory = async (req, res) => {
 export const updateCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, slug, parentId, status } = req.body || {};
+    const { name, slug, image, parentId, status } = req.body || {};
     if (!isObjectId(id)) return res.status(400).json({ message: "Invalid category id" });
 
     const update = {};
     if (typeof name === "string") update.name = normalizeString(name);
     if (typeof slug === "string") update.slug = slugify(slug);
+    if (typeof image === "string") update.image = normalizeString(image);
     if (typeof status === "string") update.status = status;
     if (parentId !== undefined) {
       if (parentId && !isObjectId(parentId)) return res.status(400).json({ message: "Invalid parentId" });

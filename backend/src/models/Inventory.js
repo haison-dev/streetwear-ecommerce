@@ -10,6 +10,4 @@ const inventorySchema = new mongoose.Schema(
   { timestamps: true, versionKey: false }
 );
 
-inventorySchema.index({ variantId: 1 }, { unique: true });
-
 export default mongoose.model('Inventory', inventorySchema);

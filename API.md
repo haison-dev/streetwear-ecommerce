@@ -111,11 +111,18 @@ Public. Query: `parentId`, `status`, `q`, `page`, `limit`, `sort`.
 **POST** `/admin/categories`  
 Permission: `category:write`. Body:
 ```json
-{ "name": "string", "slug": "string", "parentId": "string", "status": "active|inactive" }
+{ "name": "string", "slug": "string", "image": "string", "parentId": "string", "status": "active|inactive" }
 ```
 
 **PATCH** `/admin/categories/:id`  
 Permission: `category:write`.
+
+## Uploads
+**POST** `/uploads/images`  
+Permission: `product:write`. Multipart field: `images`.
+
+**POST** `/uploads/category-images`  
+Permission: `category:write`. Multipart field: `images`.
 
 ## Products
 **GET** `/products`  
