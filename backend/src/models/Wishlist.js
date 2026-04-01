@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 
 const wishlistItemSchema = new mongoose.Schema(
   {
@@ -31,3 +31,4 @@ wishlistSchema.pre('validate', function (next) {
 wishlistSchema.index({ userId: 1 }, { unique: true });
 
 export default mongoose.model('Wishlist', wishlistSchema);
+

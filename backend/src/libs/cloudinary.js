@@ -1,4 +1,4 @@
-import dotnet from "dotenv";
+﻿import dotnet from "dotenv";
 import { v2 as cloudinary } from "cloudinary";
 
 dotnet.config();
@@ -10,3 +10,4 @@ cloudinary.config({
 });
 
 export default cloudinary;
+

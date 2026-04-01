@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 
 const brandSchema = new mongoose.Schema(
   {
@@ -14,3 +14,4 @@ brandSchema.index({ slug: 1 }, { unique: true });
 brandSchema.index({ status: 1, createdAt: -1 });
 
 export default mongoose.model('Brand', brandSchema);
+

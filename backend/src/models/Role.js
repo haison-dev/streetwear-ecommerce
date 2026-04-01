@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 
 const roleSchema = new mongoose.Schema(
   {
@@ -11,3 +11,4 @@ const roleSchema = new mongoose.Schema(
 roleSchema.index({ permissions: 1 });
 
 export default mongoose.model('Role', roleSchema);
+

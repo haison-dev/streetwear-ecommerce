@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 
 const orderItemSchema = new mongoose.Schema(
   {
@@ -59,3 +59,4 @@ orderSchema.index({ status: 1, createdAt: -1 });
 orderSchema.index({ paymentStatus: 1, createdAt: -1 });
 
 export default mongoose.model('Order', orderSchema);
+

@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import Product from './Product.js';
 
 const reviewSchema = new mongoose.Schema(
@@ -60,3 +60,4 @@ reviewSchema.post('deleteOne', { document: true, query: false }, function (doc) 
 });
 
 export default mongoose.model('Review', reviewSchema);
+
