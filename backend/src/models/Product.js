@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 
 const productSchema = new mongoose.Schema(
   {
@@ -23,3 +23,4 @@ productSchema.index({ brandId: 1, status: 1 });
 productSchema.index({ categoryId: 1, status: 1 });
 
 export default mongoose.model('Product', productSchema);
+

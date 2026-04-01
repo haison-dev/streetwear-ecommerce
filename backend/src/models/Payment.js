@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 
 const paymentSchema = new mongoose.Schema(
   {
@@ -16,3 +16,4 @@ paymentSchema.index({ orderId: 1 }, { unique: true });
 paymentSchema.index({ status: 1, createdAt: -1 });
 
 export default mongoose.model('Payment', paymentSchema);
+

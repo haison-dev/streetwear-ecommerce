@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 
 const cartItemSchema = new mongoose.Schema(
   {
@@ -14,3 +14,4 @@ const cartItemSchema = new mongoose.Schema(
 cartItemSchema.index({ userId: 1, productId: 1, variantId: 1 }, { unique: true });
 
 export default mongoose.model('CartItem', cartItemSchema);
+

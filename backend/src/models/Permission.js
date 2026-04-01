@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 
 const permissionSchema = new mongoose.Schema(
   {
@@ -11,3 +11,4 @@ const permissionSchema = new mongoose.Schema(
 permissionSchema.index({ action: 1, resource: 1 }, { unique: true });
 
 export default mongoose.model('Permission', permissionSchema);
+

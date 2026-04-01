@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 
 const categorySchema = new mongoose.Schema(
   {
@@ -15,3 +15,4 @@ categorySchema.index({ slug: 1 }, { unique: true });
 categorySchema.index({ parentId: 1, status: 1 });
 
 export default mongoose.model('Category', categorySchema);
+
