@@ -1,5 +1,9 @@
 ﻿import mongoose from "mongoose";
-import { normalizeString, slugify, toNumber } from "../../shared/utils/normalize.js";
+import {
+  normalizeString,
+  slugify,
+  toNumber,
+} from "../../shared/utils/normalize.js";
 import { normalizeOptionalId } from "../../shared/utils/query.js";
 import {
   aggregateProductFilterStats,
@@ -252,8 +256,3 @@ export const deleteProductService = async (id) => {
   if (result.deletedCount === 0) throw makeError(404, "Product not found");
   return { status: 204, body: null };
 };
-
-
-
-
-
