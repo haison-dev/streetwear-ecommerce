@@ -3,6 +3,7 @@ import authModule from "./auth/index.js";
 import brandsModule from "./brands/index.js";
 import cartModule from "./cart/index.js";
 import categoriesModule from "./categories/index.js";
+import orderModule from "./order/index.js";
 import productsModule from "./products/index.js";
 import rbacModule from "./rbac/index.js";
 import uploadsModule from "./uploads/index.js";
@@ -15,6 +16,7 @@ const modules = [
   productsModule,
   usersModule,
   cartModule,
+  orderModule,
   adminUsersModule,
   rbacModule,
   uploadsModule,

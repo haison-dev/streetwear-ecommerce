@@ -1,4 +1,4 @@
-﻿import mongoose from "mongoose";
+import mongoose from "mongoose";
 import {
 createCartItem,
 deleteCartItemByIdAndUser,
@@ -12,6 +12,7 @@ deleteCartItemByIdAndUser,
   updateCartItemById,
 } from "./cart.repository.js";
 import { makeError } from "../../shared/errors/index.js";
+import { getRealAvailable } from "../../shared/utils/inventory.js";
 
 const MAX_CART_QTY = 100;
 const isObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
@@ -27,8 +28,6 @@ const parseQuantity = (value) => {
 const getEffectivePrice = (product, variant, fallback = 0) =>
   variant?.price ?? product?.salePrice ?? product?.price ?? fallback ?? 0;
 
-const getRealAvailable = (inventory) =>
-  Math.max(0, (inventory?.available || 0) - (inventory?.reserved || 0));
 
 const loadDependencies = async ({ productId, variantId }) => {
   const [product, variant, inventory] = await Promise.all([
@@ -222,6 +221,7 @@ export const removeCartItem = async ({ userId, cartItemId }) => {
     body: null,
   };
 };
+
 
 
 
