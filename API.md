@@ -1,12 +1,12 @@
 # API Design (E-commerce)
 
-**Base URL**: `/api/v1`  
-**Auth**: Bearer JWT in `Authorization: Bearer <token>`  
+**Base URL**: `/api/v1`
+**Auth**: Bearer JWT in `Authorization: Bearer <token>`
 **Roles**: `customer`, `staff`, `admin` (RBAC via permissions)
 
 ## Conventions
 - Dates are ISO 8601.
-- Money fields are in the smallest currency unit or decimal (choose one and keep consistent).
+- Money fields are in decimal VND and must be consistent across services.
 - List endpoints support pagination: `page`, `limit`, `sort`, `q`.
 - Standard error shape:
 ```json
@@ -14,7 +14,7 @@
 ```
 
 ## Auth
-**POST** `/auth/register`  
+**POST** `/auth/register`
 Body:
 ```json
 { "name": "string", "email": "string", "password": "string", "phone": "string" }
@@ -24,7 +24,7 @@ Response:
 { "token": "string", "user": { "id": "string", "email": "string", "roles": ["string"] } }
 ```
 
-**POST** `/auth/login`  
+**POST** `/auth/login`
 Body:
 ```json
 { "email": "string", "password": "string" }
@@ -34,104 +34,107 @@ Response:
 { "token": "string", "user": { "id": "string", "email": "string", "roles": ["string"] } }
 ```
 
-**POST** `/auth/logout`  
+**POST** `/auth/logout`
 Auth required.
 
-**GET** `/auth/me`  
+**POST** `/auth/refresh`
+Public.
+
+**GET** `/auth/me`
 Auth required.
 
 ## Users
-**GET** `/users/me`  
+**GET** `/users/me`
 Auth required.
 
-**PATCH** `/users/me`  
+**PATCH** `/users/me`
 Auth required. Body:
 ```json
 { "name": "string", "phone": "string" }
 ```
 
-**PUT** `/users/me/password`  
+**PUT** `/users/me/password`
 Auth required. Body:
 ```json
 { "currentPassword": "string", "newPassword": "string" }
 ```
 
-**GET** `/admin/users`  
+**GET** `/admin/users`
 Permission: `user:read`.
 
-**GET** `/admin/users/:id`  
+**GET** `/admin/users/:id`
 Permission: `user:read`.
 
-**PATCH** `/admin/users/:id/roles`  
+**PATCH** `/admin/users/:id/roles`
 Permission: `user:write`. Body:
 ```json
 { "roleIds": ["string"] }
 ```
 
 ## RBAC
-**GET** `/admin/roles`  
+**GET** `/admin/roles`
 Permission: `rbac:read`.
 
-**POST** `/admin/roles`  
+**POST** `/admin/roles`
 Permission: `rbac:write`. Body:
 ```json
 { "name": "string", "permissionIds": ["string"] }
 ```
 
-**PATCH** `/admin/roles/:id`  
+**PATCH** `/admin/roles/:id`
 Permission: `rbac:write`. Body:
 ```json
 { "name": "string", "permissionIds": ["string"] }
 ```
 
-**GET** `/admin/permissions`  
+**GET** `/admin/permissions`
 Permission: `rbac:read`.
 
 ## Brands
-**GET** `/brands`  
+**GET** `/brands`
 Public. Query: `status`, `q`, `page`, `limit`, `sort`.
 
 **GET** `/brands/:id`
 
-**POST** `/admin/brands`  
+**POST** `/admin/brands`
 Permission: `brand:write`. Body:
 ```json
 { "name": "string", "slug": "string", "logo": "string", "status": "active|inactive" }
 ```
 
-**PATCH** `/admin/brands/:id`  
+**PATCH** `/admin/brands/:id`
 Permission: `brand:write`.
 
 ## Categories
-**GET** `/categories`  
+**GET** `/categories`
 Public. Query: `parentId`, `status`, `q`, `page`, `limit`, `sort`.
 
 **GET** `/categories/:id`
 
-**POST** `/admin/categories`  
+**POST** `/admin/categories`
 Permission: `category:write`. Body:
 ```json
 { "name": "string", "slug": "string", "image": "string", "parentId": "string", "status": "active|inactive" }
 ```
 
-**PATCH** `/admin/categories/:id`  
+**PATCH** `/admin/categories/:id`
 Permission: `category:write`.
 
 ## Uploads
-**POST** `/uploads/images`  
+**POST** `/uploads/images`
 Permission: `product:write`. Multipart field: `images`.
 
-**POST** `/uploads/category-images`  
+**POST** `/uploads/category-images`
 Permission: `category:write`. Multipart field: `images`.
 
 ## Products
-**GET** `/products`  
+**GET** `/products`
 Public. Query: `q`, `brandId`, `categoryId`, `status`, `minPrice`, `maxPrice`, `page`, `limit`, `sort`.
 
-**GET** `/products/:slug`  
+**GET** `/products/:slug`
 Public.
 
-**POST** `/admin/products`  
+**POST** `/admin/products`
 Permission: `product:write`. Body:
 ```json
 {
@@ -147,111 +150,213 @@ Permission: `product:write`. Body:
 }
 ```
 
-**PATCH** `/admin/products/:id`  
+**PATCH** `/admin/products/:id`
 Permission: `product:write`.
 
 ## Variants
-**GET** `/products/:id/variants`  
+**GET** `/products/:id/variants`
 Public.
 
-**POST** `/admin/variants`  
+**POST** `/admin/variants`
 Permission: `product:write`. Body:
 ```json
 { "productId": "string", "size": 0, "color": "string", "sku": "string", "stock": 0, "price": 0 }
 ```
 
-**PATCH** `/admin/variants/:id`  
+**PATCH** `/admin/variants/:id`
 Permission: `product:write`.
 
 ## Inventory
-**GET** `/admin/inventory`  
+**GET** `/admin/inventory`
 Permission: `inventory:read`. Query: `variantId`, `page`, `limit`.
 
-**PATCH** `/admin/inventory/:variantId`  
+**PATCH** `/admin/inventory/:variantId`
 Permission: `inventory:write`. Body:
 ```json
 { "available": 0, "reserved": 0, "sold": 0 }
 ```
 
 ## Cart
-**GET** `/cart`  
+**GET** `/cart`
 Auth required.
 
-**POST** `/cart/items`  
+**POST** `/cart/items`
 Auth required. Body:
 ```json
 { "productId": "string", "variantId": "string", "quantity": 1 }
 ```
 
-**PATCH** `/cart/items/:id`  
+**PATCH** `/cart/items/:id`
 Auth required. Body:
 ```json
 { "quantity": 1 }
 ```
 
-**DELETE** `/cart/items/:id`  
+**DELETE** `/cart/items/:id`
 Auth required.
 
 ## Wishlist
-**GET** `/wishlist`  
+**GET** `/wishlist`
 Auth required.
 
-**POST** `/wishlist/items`  
+**POST** `/wishlist/items`
 Auth required. Body:
 ```json
 { "productId": "string" }
 ```
 
-**DELETE** `/wishlist/items/:productId`  
+**DELETE** `/wishlist/items/:productId`
 Auth required.
 
 ## Orders
-**POST** `/orders`  
-Auth required. Body:
+**POST** `/orders`
+Auth required. Create order from user's current cart.
+
+Body:
 ```json
 {
-  "items": [
-    { "productId": "string", "variantId": "string", "quantity": 1 }
-  ],
-  "shippingAddress": { "name": "string", "phone": "string", "address": "string", "city": "string", "district": "string", "ward": "string" }
+  "shippingAddress": {
+    "name": "string",
+    "phone": "string",
+    "address": "string",
+    "city": "string",
+    "district": "string",
+    "ward": "string"
+  },
+  "paymentMethod": "cod|momo|vnpay",
+  "note": "string",
+  "couponCode": "string"
 }
 ```
 
-**GET** `/orders`  
+Response `201`:
+```json
+{
+  "order": {},
+  "payment": {},
+  "paymentTransaction": {}
+}
+```
+
+**GET** `/orders`
 Auth required. Query: `status`, `page`, `limit`, `sort`.
 
-**GET** `/orders/:id`  
+**GET** `/orders/:id`
 Auth required.
 
-**PATCH** `/admin/orders/:id/status`  
+**PATCH** `/admin/orders/:id/status`
 Permission: `order:write`. Body:
 ```json
 { "status": "pending|confirmed|shipping|delivered|cancelled" }
 ```
 
 ## Payments
-**POST** `/payments`  
-Auth required. Body:
+Payment is split from Order at domain/data level. Current phase includes internal payment lifecycle and VNPay callback flow.
+
+**GET** `/payments/:id`
+Auth required. Ownership-first access. Backoffice can read across users with `payment:read|payment:write`.
+
+**POST** `/payments/:paymentId/attempts`
+Auth required. Create a new transaction attempt.
+
+Body:
 ```json
-{ "orderId": "string", "method": "cod|momo|vnpay" }
+{ "provider": "momo|vnpay" }
 ```
 
-**POST** `/payments/callback/momo`  
-Public. Used by gateway.
+Rules:
+- `provider` must match `payment.method`.
+- New attempt is allowed only when latest attempt is `failed`.
+- If latest attempt is `pending`, it must be expired first (`PAYMENT_PENDING_ATTEMPT_TTL_MINUTES`, default 15).
 
-**POST** `/payments/callback/vnpay`  
-Public. Used by gateway.
+Response:
+```json
+{
+  "payment": {},
+  "paymentTransaction": {},
+  "nextAction": { "type": "gateway_pending", "provider": "momo|vnpay" },
+  "orderId": "string"
+}
+```
+
+**POST** `/payments/:paymentId/vnpay/checkout`
+Auth required. Create VNPay attempt and signed checkout URL.
+
+Response:
+```json
+{
+  "payment": {},
+  "paymentTransaction": {},
+  "nextAction": {
+    "type": "gateway_pending",
+    "provider": "vnpay",
+    "checkoutUrl": "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?..."
+  },
+  "checkoutUrl": "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?...",
+  "orderId": "string"
+}
+```
+
+**GET** `/payments/:paymentId/transactions`
+Auth required. List attempts by `attemptNo` desc.
+
+**GET** `/payments/transactions/:id`
+Auth required.
+
+**PATCH** `/payments/transactions/:id/status`
+Permission: `payment:write`. Internal/manual update endpoint.
+
+Body:
+```json
+{
+  "status": "pending|paid|failed",
+  "providerTransactionId": "string",
+  "paidAt": "ISO date",
+  "failureReason": "string",
+  "rawResponse": {}
+}
+```
+
+Transition policy:
+- `pending -> pending|paid|failed`
+- `paid -> paid` (idempotent only)
+- `failed -> failed` (idempotent only)
+
+Idempotency policy:
+- Duplicate final callback is ignored (no-op).
+- Stale callback from older attempt is ignored (no-op).
+
+**GET** `/payments/vnpay/return`
+Public. Browser return endpoint. Verify checksum, then return status or redirect to frontend result page.
+
+**GET** `/payments/vnpay/ipn`
+Public. Server-to-server callback endpoint. Verify checksum, enforce idempotency, and update `paymentTransaction` / `payment` / `order.paymentStatus`.
+
+**POST** `/payments/transactions/:id/reconcile/vnpay`
+Permission: `payment:write`. Manual reconcile a specific VNPay transaction with gateway query API.
+
+**POST** `/payments/reconcile/vnpay/pending-expired`
+Permission: `payment:write`. Batch reconcile pending VNPay transactions older than TTL.
+
+Error code policy (backend):
+- `PAYMENT_ATTEMPT_NOT_ALLOWED`
+- `PAYMENT_DUPLICATE_ATTEMPT`
+- `PAYMENT_INVALID_STATUS_TRANSITION`
+- `PAYMENT_STALE_CALLBACK`
+- `PAYMENT_DUPLICATE_CALLBACK`
+
+Audit policy:
+- Payment module writes audit log for attempt creation, status transitions, and reconcile actions.
 
 ## Reviews
-**GET** `/products/:id/reviews`  
+**GET** `/products/:id/reviews`
 Public. Query: `page`, `limit`, `sort`.
 
-**POST** `/reviews`  
+**POST** `/reviews`
 Auth required. Body:
 ```json
 { "productId": "string", "rating": 5, "comment": "string" }
 ```
 
-**DELETE** `/admin/reviews/:id`  
+**DELETE** `/admin/reviews/:id`
 Permission: `review:write`.
-

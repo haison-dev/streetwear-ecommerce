@@ -4,7 +4,9 @@
   "main": "src/server.js",
   "scripts": {
     "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "test": "node tests/order-cart-flow.test.js && node tests/payment-flow.test.js",
+    "seed:payment-permissions": "node src/scripts/seed-payment-permissions.js"
   },
   "type": "module",
   "keywords": [],
@@ -25,6 +27,7 @@
     "validator": "^13.15.26"
   },
   "devDependencies": {
+    "esmock": "^2.7.3",
     "nodemon": "^3.1.14"
   }
 }
