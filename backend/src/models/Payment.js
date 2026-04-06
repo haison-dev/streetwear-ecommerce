@@ -10,12 +10,15 @@ const paymentSchema = new mongoose.Schema(
     },
     amount: { type: Number, required: true, min: 0 },
     method: { type: String, enum: ["cod", "momo", "vnpay"], required: true },
-    status: { type: String, enum: ["pending", "paid", "failed"], default: "pending" },
+    status: {
+      type: String,
+      enum: ["pending", "paid", "failed"],
+      default: "pending",
+    },
   },
   { timestamps: true, versionKey: false },
 );
 
-paymentSchema.index({ orderId: 1 }, { unique: true });
 paymentSchema.index({ status: 1, createdAt: -1 });
 
 export default mongoose.model("Payment", paymentSchema);
