@@ -7,7 +7,9 @@ const DashboardGate = () => {
 
   if (!token || !user) return <Navigate to="/" replace />;
 
-  const roleNames = getRoleNames(user?.roles);
+  const roleNames = Array.isArray(user?.roleNames) && user.roleNames.length
+    ? user.roleNames.map((role) => String(role).toLowerCase())
+    : getRoleNames(user?.roles);
 
   if (roleNames.includes("admin")) return <Navigate to="/dashboard/admin" replace />;
   if (roleNames.includes("staff")) return <Navigate to="/dashboard/staff" replace />;

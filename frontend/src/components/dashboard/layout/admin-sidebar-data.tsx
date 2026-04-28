@@ -35,6 +35,7 @@ export const adminSidebarData: SidebarData = {
         { title: "All Products", url: "/dashboard/admin/products" },
         { title: "Categories", url: "/dashboard/admin/categories" },
         { title: "Brands", url: "/dashboard/admin/brands" },
+        { title: "Inventory", url: "/dashboard/admin/inventory" },
       ],
     },
     {

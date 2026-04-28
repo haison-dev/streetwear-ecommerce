@@ -1,0 +1,26 @@
+export const queryKeys = {
+  authMe: ["auth", "me"] as const,
+  products: (params: unknown) => ["products", params] as const,
+  productFilters: (params: unknown) => ["products", "filters", params] as const,
+  productDetail: (slug: string) => ["products", "detail", slug] as const,
+  productReviews: (productId: string, params: unknown) =>
+    ["products", productId, "reviews", params] as const,
+  categories: ["categories"] as const,
+  brands: ["brands"] as const,
+  cart: ["cart"] as const,
+  wishlist: ["wishlist"] as const,
+  orders: (params: unknown) => ["orders", params] as const,
+  orderDetail: (orderId: string) => ["orders", orderId] as const,
+  payment: (paymentId: string) => ["payments", paymentId] as const,
+  paymentTransactions: (paymentId: string, params: unknown) =>
+    ["payments", paymentId, "transactions", params] as const,
+  adminProducts: (params: unknown) => ["admin", "products", params] as const,
+  adminCategories: (params: unknown) => ["admin", "categories", params] as const,
+  adminBrands: (params: unknown) => ["admin", "brands", params] as const,
+  adminOrders: (params: unknown) => ["admin", "orders", params] as const,
+  adminUsers: ["admin", "users"] as const,
+  adminRoles: ["admin", "roles"] as const,
+  adminPermissions: ["admin", "permissions"] as const,
+  adminInventory: (params: unknown) => ["admin", "inventory", params] as const,
+  adminCollections: ["admin", "collections"] as const,
+};

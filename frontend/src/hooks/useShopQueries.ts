@@ -3,6 +3,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { productService } from "@/services/productService";
 import { brandService } from "@/services/brandService";
 import { categoryService } from "@/services/categoryService";
+import { queryKeys } from "@/lib/queryKeys";
 
 export interface ShopFilters {
   q: string;
@@ -16,51 +17,42 @@ export interface ShopFilters {
   limit: number;
 }
 
+const isObjectId = (value?: string) => /^[a-fA-F0-9]{24}$/.test(String(value || ""));
+
 export const useCategoriesQuery = () =>
   useQuery({
-    queryKey: ["categories"],
-    queryFn: () => categoryService.list(),
+    queryKey: [...queryKeys.categories, { status: "active" }],
+    queryFn: () => categoryService.list({ status: "active", limit: 200 }),
     staleTime: 5 * 60 * 1000,
   });
 
 export const useBrandsQuery = () =>
   useQuery({
-    queryKey: ["brands"],
-    queryFn: () => brandService.list(),
+    queryKey: [...queryKeys.brands, { status: "active" }],
+    queryFn: () => brandService.list({ status: "active", limit: 200 }),
     staleTime: 5 * 60 * 1000,
   });
 
 export const useProductStatsQuery = (q: string, categoryId: string, brandId: string) =>
   useQuery({
-    queryKey: ["product-stats", q, categoryId, brandId],
+    queryKey: queryKeys.productFilters({ q, categoryId, brandId, status: "active" }),
     queryFn: () =>
       productService.getFilterStats({
         q: q || undefined,
-        categoryId: categoryId || undefined,
-        brandId: brandId || undefined,
+        categoryId: isObjectId(categoryId) ? categoryId : undefined,
+        brandId: isObjectId(brandId) ? brandId : undefined,
         status: "active",
       }),
   });
 
 export const useProductsQuery = (filters: ShopFilters) =>
   useQuery({
-    queryKey: [
-      "products",
-      filters.q,
-      filters.categoryId,
-      filters.brandId,
-      filters.minPrice,
-      filters.maxPrice,
-      filters.minRating,
-      filters.sort,
-      filters.page,
-      filters.limit,
-    ],
+    queryKey: queryKeys.products(filters),
     queryFn: () =>
       productService.list({
         q: filters.q || undefined,
-        categoryId: filters.categoryId || undefined,
-        brandId: filters.brandId || undefined,
+        categoryId: isObjectId(filters.categoryId) ? filters.categoryId : undefined,
+        brandId: isObjectId(filters.brandId) ? filters.brandId : undefined,
         minPrice: filters.minPrice !== undefined ? filters.minPrice : undefined,
         maxPrice: filters.maxPrice !== undefined ? filters.maxPrice : undefined,
         minRating: filters.minRating || undefined,

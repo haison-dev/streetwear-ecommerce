@@ -28,9 +28,9 @@ const Footer = () => {
             <h4 className="font-body text-xs tracking-widest uppercase opacity-50 mb-4">Shop</h4>
             <ul className="space-y-3 font-body text-sm">
               <li><Link to="/shop" className="hover:opacity-70 transition-opacity">All Products</Link></li>
-              <li><Link to="/shop?categoryId=c2" className="hover:opacity-70 transition-opacity">Music</Link></li>
-              <li><Link to="/shop?categoryId=c1" className="hover:opacity-70 transition-opacity">Clothing</Link></li>
-              <li><Link to="/shop?categoryId=c3" className="hover:opacity-70 transition-opacity">Accessories</Link></li>
+              <li><Link to="/shop?collection=vinyls" className="hover:opacity-70 transition-opacity">Music</Link></li>
+              <li><Link to="/shop?collection=hoodies-sweatshirts" className="hover:opacity-70 transition-opacity">Clothing</Link></li>
+              <li><Link to="/shop?collection=accessories" className="hover:opacity-70 transition-opacity">Accessories</Link></li>
             </ul>
           </div>
 

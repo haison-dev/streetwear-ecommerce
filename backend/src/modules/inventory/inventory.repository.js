@@ -5,7 +5,11 @@ export const findInventories = ({ filter, skip, limit }) =>
     .sort({ updatedAt: -1 })
     .skip(skip)
     .limit(limit)
-    .populate({ path: "variantId", select: "productId size color sku stock price" })
+    .populate({
+      path: "variantId",
+      select: "productId size color sku stock price",
+      populate: { path: "productId", select: "name" },
+    })
     .lean();
 
 export const countInventories = (filter) => Inventory.countDocuments(filter);

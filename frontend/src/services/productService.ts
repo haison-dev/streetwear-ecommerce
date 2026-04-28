@@ -45,4 +45,9 @@ export const productService = {
     const res = await api.get(`/products/${id}`);
     return res.data.product;
   },
+
+  listVariants: async (productId: string) => {
+    const res = await api.get(`/products/${productId}/variants`);
+    return res.data;
+  },
 };
