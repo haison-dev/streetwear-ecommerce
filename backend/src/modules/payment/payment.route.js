@@ -8,6 +8,7 @@ import {
   createVnpayCheckout,
   getPaymentById,
   getPaymentTransactionById,
+  listAllPaymentTransactions,
   listPaymentTransactions,
   reconcileExpiredPendingVnpayTransactions,
   reconcileVnpayTransaction,
@@ -23,6 +24,7 @@ router.get("/vnpay/ipn", vnpayIpn);
 
 router.use(protectedRoute);
 
+router.get("/transactions", authorize("payment", "read"), listAllPaymentTransactions);
 router.get("/transactions/:id", getPaymentTransactionById);
 router.patch(
   "/transactions/:id/status",

@@ -91,14 +91,14 @@ const setupService = async ({ isObjectIdValid = () => true } = {}) => {
     })),
     deleteCartItemsByIds: spy(async () => ({ deletedCount: 1 })),
     findCartItemsByUserId: spy(async () => []),
-    findInventoryByVariantId: spy(async () => null),
+    findInventoriesByVariantIds: spy(async () => []),
     findLatestPaymentTransactionByOrderId: spy(async () => null),
     findOrderById: spy(async () => null),
     findOrderByIdAndUserId: spy(async () => null),
     findOrders: spy(async () => []),
     findPaymentByOrderId: spy(async () => null),
-    findProductById: spy(async () => null),
-    findVariantById: spy(async () => null),
+    findProductsByIds: spy(async () => []),
+    findVariantsByIds: spy(async () => []),
     updateOrderById: spy(async () => null),
     updatePaymentByOrderId: spy(async () => null),
     updatePaymentTransactionById: spy(async () => null),
@@ -134,26 +134,32 @@ await test("createOrderFromCartService creates order+payment+transaction and com
   repoMock.findCartItemsByUserId.setImpl(async () => [
     { _id: "c1", productId: "p1", variantId: "v1", quantity: 2 },
   ]);
-  repoMock.findProductById.setImpl(async () => ({
-    _id: "p1",
-    status: "active",
-    name: "T-Shirt",
-    images: ["img.jpg"],
-    price: 120000,
-    salePrice: 100000,
-  }));
-  repoMock.findVariantById.setImpl(async () => ({
-    _id: "v1",
-    productId: "p1",
-    size: 42,
-    color: "black",
-    price: 100000,
-  }));
-  repoMock.findInventoryByVariantId.setImpl(async () => ({
-    variantId: "v1",
-    available: 10,
-    reserved: 0,
-  }));
+  repoMock.findProductsByIds.setImpl(async () => [
+    {
+      _id: "p1",
+      status: "active",
+      name: "T-Shirt",
+      images: ["img.jpg"],
+      price: 120000,
+      salePrice: 100000,
+    },
+  ]);
+  repoMock.findVariantsByIds.setImpl(async () => [
+    {
+      _id: "v1",
+      productId: "p1",
+      size: 42,
+      color: "black",
+      price: 100000,
+    },
+  ]);
+  repoMock.findInventoriesByVariantIds.setImpl(async () => [
+    {
+      variantId: "v1",
+      available: 10,
+      reserved: 0,
+    },
+  ]);
   repoMock.createPayment.setImpl(async () => ({
     _id: "pay-1",
     amount: 230000,
@@ -225,24 +231,30 @@ await test("createOrderFromCartService aborts transaction when reserve fails", a
   repoMock.findCartItemsByUserId.setImpl(async () => [
     { _id: "c1", productId: "p1", variantId: "v1", quantity: 2 },
   ]);
-  repoMock.findProductById.setImpl(async () => ({
-    _id: "p1",
-    status: "active",
-    name: "T-Shirt",
-    images: ["img.jpg"],
-  }));
-  repoMock.findVariantById.setImpl(async () => ({
-    _id: "v1",
-    productId: "p1",
-    size: 42,
-    color: "black",
-    price: 100000,
-  }));
-  repoMock.findInventoryByVariantId.setImpl(async () => ({
-    variantId: "v1",
-    available: 10,
-    reserved: 0,
-  }));
+  repoMock.findProductsByIds.setImpl(async () => [
+    {
+      _id: "p1",
+      status: "active",
+      name: "T-Shirt",
+      images: ["img.jpg"],
+    },
+  ]);
+  repoMock.findVariantsByIds.setImpl(async () => [
+    {
+      _id: "v1",
+      productId: "p1",
+      size: 42,
+      color: "black",
+      price: 100000,
+    },
+  ]);
+  repoMock.findInventoriesByVariantIds.setImpl(async () => [
+    {
+      variantId: "v1",
+      available: 10,
+      reserved: 0,
+    },
+  ]);
   inventoryMock.reserveStockForItems.setImpl(async () => false);
 
   await assert.rejects(

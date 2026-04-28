@@ -5,16 +5,20 @@ import {
   getProductByIdController,
   getProductBySlugController,
   getProductFilterStatsController,
+  listProductVariantsController,
   listProductsController,
   updateProductController,
 } from "./products.controller.js";
 import { authorize, protectedRoute } from "../../shared/middleware/authMiddleware.js";
+import { listProductReviewsController } from "../reviews/reviews.controller.js";
 
 const router = Router();
 
 router.get("/", listProductsController);
 router.get("/filters", getProductFilterStatsController);
 router.get("/slug/:slug", getProductBySlugController);
+router.get("/:id/variants", listProductVariantsController);
+router.get("/:id/reviews", listProductReviewsController);
 router.get("/:id", getProductByIdController);
 router.post("/", protectedRoute, authorize("product", "write"), createProductController);
 router.patch("/:id", protectedRoute, authorize("product", "write"), updateProductController);

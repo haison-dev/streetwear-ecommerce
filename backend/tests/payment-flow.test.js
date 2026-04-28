@@ -43,6 +43,7 @@ const setupService = async ({ isObjectIdValid = () => true } = {}) => {
   };
 
   const repoMock = {
+    countAllPaymentTransactions: spy(async () => 0),
     countPaymentTransactionsByPaymentId: spy(async () => 0),
     createPaymentAuditLog: spy(async () => ({ _id: "audit-1" })),
     createPaymentTransaction: spy(async () => ({
@@ -55,6 +56,7 @@ const setupService = async ({ isObjectIdValid = () => true } = {}) => {
       attemptNo: 2,
     })),
     findPendingPaymentTransactionsBefore: spy(async () => []),
+    findAllPaymentTransactions: spy(async () => []),
     findLatestPaymentTransactionByPaymentId: spy(async () => null),
     findOrderById: spy(async () => null),
     findPaymentById: spy(async () => null),
@@ -122,6 +124,25 @@ await test("getPaymentByIdService returns payment when user owns order", async (
   assert.equal(result.status, 200);
   assert.equal(result.body.payment._id, "pay-1");
   assert.equal(result.body.latestTransaction._id, "txn-1");
+});
+
+await test("listAllPaymentTransactionsService returns paginated list for backoffice", async () => {
+  const { service, mocks } = await setupService();
+  const { repoMock } = mocks;
+
+  repoMock.findAllPaymentTransactions.setImpl(async () => [
+    { _id: "txn-1", status: "pending", method: "vnpay" },
+  ]);
+  repoMock.countAllPaymentTransactions.setImpl(async () => 1);
+
+  const result = await service.listAllPaymentTransactionsService({
+    query: { status: "pending", method: "vnpay", page: 1, limit: 10, sort: "newest" },
+    canReadAll: true,
+  });
+
+  assert.equal(result.status, 200);
+  assert.equal(result.body.transactions.length, 1);
+  assert.equal(result.body.meta.total, 1);
 });
 
 await test("createPaymentAttemptService creates new pending attempt with incremented attemptNo", async () => {

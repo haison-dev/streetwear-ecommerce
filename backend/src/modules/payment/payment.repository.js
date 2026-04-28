@@ -67,6 +67,21 @@ export const updatePaymentTransactionById = (id, payload, session = null) =>
     ...(session ? { session } : {}),
   });
 
+export const findAllPaymentTransactions = ({
+  filter = {},
+  skip = 0,
+  limit = 20,
+  sort = { createdAt: -1 },
+}) =>
+  PaymentTransaction.find(filter)
+    .sort(sort)
+    .skip(skip)
+    .limit(limit)
+    .lean();
+
+export const countAllPaymentTransactions = (filter = {}) =>
+  PaymentTransaction.countDocuments(filter);
+
 export const createPaymentAuditLog = (payload, session = null) =>
   PaymentAuditLog.create([payload], session ? { session } : undefined).then(
     (docs) => docs[0],
