@@ -8,11 +8,11 @@ import productJersey1 from '@/assets/product-jersey-1.jpg';
 import productMug1 from '@/assets/product-mug-1.jpg';
 
 const cats = [
-  { name: 'MUSIC', image: productHoodie1, slug: 'c2' },
-  { name: 'CLOTHING', image: productTee1, slug: 'c1' },
-  { name: 'ACCESSORIES', image: productAccessory1, slug: 'c3' },
-  { name: 'COLLAB', image: productJersey1, slug: 'c5' },
-  { name: 'HOME & LIFESTYLE', image: productMug1, slug: 'c4' },
+  { name: 'MUSIC', image: productHoodie1, slug: 'vinyls' },
+  { name: 'CLOTHING', image: productTee1, slug: 'hoodies-sweatshirts' },
+  { name: 'ACCESSORIES', image: productAccessory1, slug: 'accessories' },
+  { name: 'COLLAB', image: productJersey1, slug: 'crownline-private-label' },
+  { name: 'HOME & LIFESTYLE', image: productMug1, slug: '2025-all-star-collection' },
 ];
 
 const ShopCategories = () => {
@@ -38,7 +38,7 @@ const ShopCategories = () => {
               transition={{ delay: i * 0.1 }}
             >
               <Link
-                to={`/shop?categoryId=${cat.slug}`}
+                to={`/shop?collection=${cat.slug}`}
                 className="group relative block aspect-[3/4] rounded-lg overflow-hidden bg-foreground"
               >
                 <motion.img

@@ -1,24 +1,18 @@
-﻿import api from "@/lib/axios";
+import api from "@/lib/axios";
+import type {
+  AuthResponse,
+  MeResponse,
+  RefreshResponse,
+  RegisterPayload,
+} from "@/types/auth";
 
 export const authService = {
-  register: async (
-    email: string,
-    password: string,
-    firstName: string,
-    lastName: string,
-    phone?: string,
-  ) => {
-    const res = await api.post("/auth/register", {
-      email,
-      password,
-      firstName,
-      lastName,
-      phone,
-    });
+  register: async (payload: RegisterPayload): Promise<AuthResponse> => {
+    const res = await api.post("/auth/register", payload);
     return res.data;
   },
 
-  login: async (email: string, password: string) => {
+  login: async (email: string, password: string): Promise<AuthResponse> => {
     const res = await api.post("/auth/login", { email, password });
     return res.data;
   },
@@ -28,13 +22,14 @@ export const authService = {
     return res.data;
   },
 
-  refresh: async () => {
+  refresh: async (): Promise<RefreshResponse> => {
     const res = await api.post("/auth/refresh");
-    return res.data.accessToken;
+    return res.data;
   },
 
-  me: async () => { 
+  me: async (): Promise<MeResponse> => {
     const res = await api.get("/auth/me");
     return res.data;
   },
 };
+

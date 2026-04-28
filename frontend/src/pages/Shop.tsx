@@ -8,6 +8,7 @@ import ProductCard from '@/components/ProductCard';
 import FilterSidebar from '@/components/FilterSidebar';
 import { useProductFilterStore } from '@/stores/useProductFilterStore';
 import { useShopQueries } from '@/hooks/useShopQueries';
+import { useCollectionBySlugQuery, useCollectionProductsQuery } from '@/hooks/useCollectionQueries';
 
 const sortOptions = [
   { value: 'newest', label: 'Newest' },
@@ -17,9 +18,13 @@ const sortOptions = [
   { value: 'name', label: 'Name' },
 ];
 
+const isObjectId = (value?: string) => /^[a-fA-F0-9]{24}$/.test(String(value || ""));
+
 const Shop = () => {
   const [searchParams] = useSearchParams();
-  const initialCategory = searchParams.get('categoryId') || '';
+  const initialCategoryRaw = searchParams.get('categoryId') || '';
+  const initialCategory = isObjectId(initialCategoryRaw) ? initialCategoryRaw : '';
+  const collectionSlug = searchParams.get('collection') || '';
 
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
@@ -42,6 +47,12 @@ const Shop = () => {
     }
   }, [initialCategory, categoryId, setFilters]);
 
+  useEffect(() => {
+    if (categoryId && !isObjectId(categoryId)) {
+      setFilters({ categoryId: "", page: 1 });
+    }
+  }, [categoryId, setFilters]);
+
   const { categories, brands, stats, productsQuery, statsQuery } = useShopQueries({
     q,
     categoryId,
@@ -53,6 +64,14 @@ const Shop = () => {
     page,
     limit,
   });
+  const collectionQuery = useCollectionBySlugQuery(collectionSlug || undefined);
+  const collectionProductsQuery = useCollectionProductsQuery(collectionSlug || undefined, {
+    page,
+    limit,
+    sort,
+  });
+  const isCollectionView = Boolean(collectionSlug);
+  const effectiveProductsQuery = isCollectionView ? collectionProductsQuery : productsQuery;
 
   useEffect(() => {
     if (!statsQuery.data) return;
@@ -70,9 +89,11 @@ const Shop = () => {
     });
   }, [statsQuery.data, minPrice, maxPrice, setFilters]);
 
-  const categoryName = categoryId
-    ? categories.find(c => c._id === categoryId)?.name
-    : 'All Products';
+  const categoryName = isCollectionView
+    ? collectionQuery.data?.name || 'Collection'
+    : categoryId
+      ? categories.find(c => c._id === categoryId)?.name
+      : 'All Products';
 
   return (
     <div className="min-h-screen bg-background">
@@ -127,7 +148,7 @@ const Shop = () => {
               </select>
 
               <span className="font-body text-sm text-muted-foreground ml-auto md:ml-0">
-                {productsQuery.data?.meta.total || 0} product{(productsQuery.data?.meta.total || 0) !== 1 ? 's' : ''}
+                {effectiveProductsQuery.data?.meta.total || 0} product{(effectiveProductsQuery.data?.meta.total || 0) !== 1 ? 's' : ''}
               </span>
             </div>
           </div>
@@ -180,18 +201,18 @@ const Shop = () => {
 
           {/* Product grid - full width to right edge */}
           <div className="flex-1 px-6 lg:px-0 pr-0 lg:pr-12">
-            {productsQuery.isLoading ? (
+            {effectiveProductsQuery.isLoading ? (
               <div className="text-center py-20">
                 <p className="font-body text-sm text-muted-foreground">Loading products...</p>
               </div>
-            ) : productsQuery.isError ? (
+            ) : effectiveProductsQuery.isError ? (
               <div className="text-center py-20">
                 <p className="font-display text-3xl text-muted-foreground">Unable to load products</p>
                 <p className="font-body text-sm text-muted-foreground mt-2">Failed to load products</p>
               </div>
-            ) : (productsQuery.data?.products?.length || 0) > 0 ? (
+            ) : (effectiveProductsQuery.data?.products?.length || 0) > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-                {productsQuery.data!.products.map((product, i) => (
+                {effectiveProductsQuery.data!.products.map((product, i) => (
                   <ProductCard key={product._id} product={product} index={i} />
                 ))}
               </div>
@@ -203,11 +224,11 @@ const Shop = () => {
             )}
 
             {/* Pagination */}
-            {Math.ceil((productsQuery.data?.meta.total || 0) / (productsQuery.data?.meta.limit || 1)) > 1 && (
+            {Math.ceil((effectiveProductsQuery.data?.meta.total || 0) / (effectiveProductsQuery.data?.meta.limit || 1)) > 1 && (
               <div className="flex justify-center gap-2 mt-12">
                 {Array.from({
                   length: Math.ceil(
-                    (productsQuery.data?.meta.total || 0) / (productsQuery.data?.meta.limit || 1)
+                    (effectiveProductsQuery.data?.meta.total || 0) / (effectiveProductsQuery.data?.meta.limit || 1)
                   ),
                 }).map((_, i) => (
                   <button

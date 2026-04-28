@@ -14,7 +14,11 @@ const ProtectedRoute = ({ allowRoles, children }: ProtectedRouteProps) => {
     return <Navigate to="/" replace />
   }
 
-  if (!hasAnyRole(user.roles, allowRoles)) {
+  const rolesSource = Array.isArray(user.roleNames) && user.roleNames.length
+    ? user.roleNames
+    : user.roles
+
+  if (!hasAnyRole(rolesSource, allowRoles)) {
     return <Navigate to="/dashboard" replace />
   }
 

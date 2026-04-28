@@ -29,8 +29,6 @@ const LoginPanel = ({ open, onClose }: Props) => {
       navigate("/dashboard/admin", { replace: true });
     } else if (roleNames.includes("staff")) {
       navigate("/dashboard/staff", { replace: true });
-    } else {
-      navigate("/", { replace: true });
     }
     onClose();
   }, [token, user, open, onClose, navigate]);

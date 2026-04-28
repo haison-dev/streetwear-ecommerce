@@ -1,6 +1,15 @@
 import api from "@/lib/axios";
 import type { Category } from "@/types";
 
+export interface ListCategoriesParams {
+  parentId?: string;
+  status?: "active" | "inactive" | "all";
+  q?: string;
+  page?: number;
+  limit?: number;
+  sort?: string;
+}
+
 export interface CategoryPayload {
   name: string;
   slug?: string;
@@ -10,8 +19,8 @@ export interface CategoryPayload {
 }
 
 export const categoryService = {
-  list: async (): Promise<Category[]> => {
-    const res = await api.get("/categories");
+  list: async (params?: ListCategoriesParams): Promise<Category[]> => {
+    const res = await api.get("/categories", { params });
     return res.data.categories || [];
   },
 

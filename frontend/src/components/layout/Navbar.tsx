@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Search, ShoppingBag, Menu, X, User, ChevronDown, LogOut, UserRound } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import LoginPanel from '@/components/auth/LoginPanel';
@@ -11,6 +12,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { getRoleNames } from '@/lib/roles';
+import { useCartQuery } from '@/hooks/useCartQueries';
+import { useCollectionsQuery } from '@/hooks/useCollectionQueries';
+import { queryKeys } from '@/lib/queryKeys';
 
 import productVinyl1 from '@/assets/product-vinyl-1.jpg';
 import productTee1 from '@/assets/product-tee-1.jpg';
@@ -18,20 +22,12 @@ import productAccessory1 from '@/assets/product-accessory-1.jpg';
 import productJersey1 from '@/assets/product-jersey-1.jpg';
 import productMug1 from '@/assets/product-mug-1.jpg';
 
-const shopCategoryCards = [
-  { name: 'MUSIC', image: productVinyl1, id: 'c2' },
-  { name: 'CLOTHING', image: productTee1, id: 'c1' },
-  { name: 'ACCESSORIES', image: productAccessory1, id: 'c3' },
-  { name: 'COLLAB', image: productJersey1, id: 'c5' },
-  { name: 'HOME AND LIFESTYLE', image: productMug1, id: 'c4' },
-];
-
-const shopLinks = [
-  { label: 'All Products', to: '/shop' },
-  { label: 'Vinyls', to: '/shop?categoryId=c2' },
-  { label: 'Hoodies & Sweatshirts', to: '/shop?categoryId=c1' },
-  { label: 'CROWNLINE Private Label', to: '/shop?brandId=b6' },
-  { label: '2025 All-Star Collection', to: '/shop' },
+const fallbackCollectionImages = [
+  productVinyl1,
+  productTee1,
+  productAccessory1,
+  productJersey1,
+  productMug1,
 ];
 
 const Navbar = () => {
@@ -40,14 +36,34 @@ const Navbar = () => {
   const [shopOpen, setShopOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const queryClient = useQueryClient();
   const { token, user, logout } = useAuthStore();
+  const cartQuery = useCartQuery(Boolean(token));
+  const collectionsQuery = useCollectionsQuery();
 
   const isLoggedIn = Boolean(token && user);
   const displayName = user?.displayName || user?.email || 'Account';
-  const roleNames = getRoleNames(user?.roles);
+  const roleNames =
+    Array.isArray(user?.roleNames) && user.roleNames.length
+      ? user.roleNames.map((role) => String(role).toLowerCase())
+      : getRoleNames(user?.roles);
   const profilePath = roleNames.includes('staff')
     ? '/dashboard/staff/account'
     : '/dashboard/admin/account';
+  const cartCount = cartQuery.data?.summary?.totalItems || 0;
+  const collections = collectionsQuery.data || [];
+  const shopLinks = [
+    { label: "All Products", to: "/shop" },
+    ...collections.map((collection) => ({
+      label: collection.name,
+      to: `/shop?collection=${encodeURIComponent(collection.slug)}`,
+    })),
+  ];
+  const shopCategoryCards = collections.slice(0, 5).map((collection, index) => ({
+    name: collection.name.toUpperCase(),
+    image: collection.heroImage || fallbackCollectionImages[index % fallbackCollectionImages.length],
+    slug: collection.slug,
+  }));
 
   const handleShopEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -95,12 +111,12 @@ const Navbar = () => {
           <Link to="/shop" className="hover:opacity-60 transition-opacity">
             <Search size={20} />
           </Link>
-          <button className="relative hover:opacity-60 transition-opacity">
+          <Link to="/cart" className="relative hover:opacity-60 transition-opacity">
             <ShoppingBag size={20} />
             <span className="absolute -top-1.5 -right-1.5 bg-foreground text-background text-[10px] font-body font-semibold rounded-full w-4 h-4 flex items-center justify-center">
-              0
+              {cartCount > 99 ? "99+" : cartCount}
             </span>
-          </button>
+          </Link>
           {isLoggedIn ? (
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
@@ -124,12 +140,14 @@ const Navbar = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   variant="destructive"
-                  onSelect={() => {
-                    void (async () => {
-                      await logout();
-                      navigate('/', { replace: true });
-                    })();
-                  }}
+                    onSelect={() => {
+                      void (async () => {
+                        await logout();
+                        await queryClient.cancelQueries({ queryKey: queryKeys.cart });
+                        queryClient.removeQueries({ queryKey: queryKeys.cart });
+                        navigate('/', { replace: true });
+                      })();
+                    }}
                 >
                   <LogOut className="size-4" />
                   Logout
@@ -186,8 +204,8 @@ const Navbar = () => {
               <div className="flex-1 grid grid-cols-5 gap-3">
                 {shopCategoryCards.map((cat) => (
                   <Link
-                    key={cat.id}
-                    to={`/shop?categoryId=${cat.id}`}
+                    key={cat.slug}
+                    to={`/shop?collection=${encodeURIComponent(cat.slug)}`}
                     onClick={() => setShopOpen(false)}
                     className="group relative block rounded-lg overflow-hidden bg-foreground aspect-[3/4]"
                   >

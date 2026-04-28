@@ -53,3 +53,26 @@ export interface FiltersResponse {
     maxRating: number;
   };
 }
+
+export interface CollectionCriteria {
+  categoryIds?: string[];
+  brandIds?: string[];
+  q?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minRating?: number;
+  sort?: string;
+}
+
+export interface Collection {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  heroImage?: string;
+  status: "active" | "inactive";
+  sortOrder: number;
+  criteria?: CollectionCriteria;
+}
+
+export * from "@/types/admin";
