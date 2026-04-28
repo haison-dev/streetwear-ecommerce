@@ -7,7 +7,6 @@ const REQUIRED_SHIPPING_FIELDS = [
   "address",
   "city",
   "district",
-  "ward",
 ];
 
 export const validateCreateOrderFromCartInput = ({ userId, payload }) => {

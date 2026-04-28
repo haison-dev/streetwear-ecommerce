@@ -68,6 +68,9 @@ export const updateOrderById = (id, payload, session = null) =>
 export const findPaymentByOrderId = (orderId, session = null) =>
   Payment.findOne({ orderId }, null, session ? { session } : undefined);
 
+export const findPaymentsByOrderIds = (orderIds = []) =>
+  Payment.find({ orderId: { $in: orderIds } }).lean();
+
 export const updatePaymentByOrderId = (orderId, payload, session = null) =>
   Payment.findOneAndUpdate({ orderId }, payload, {
     new: true,

@@ -47,9 +47,13 @@ const Navbar = () => {
     Array.isArray(user?.roleNames) && user.roleNames.length
       ? user.roleNames.map((role) => String(role).toLowerCase())
       : getRoleNames(user?.roles);
-  const profilePath = roleNames.includes('staff')
-    ? '/dashboard/staff/account'
-    : '/dashboard/admin/account';
+  const isStaff = roleNames.includes("staff");
+  const isAdmin = roleNames.includes("admin");
+  const profilePath = isStaff
+    ? "/dashboard/staff/account"
+    : isAdmin
+      ? "/dashboard/admin/account"
+      : "/account/orders";
   const cartCount = cartQuery.data?.summary?.totalItems || 0;
   const collections = collectionsQuery.data || [];
   const shopLinks = [
@@ -136,7 +140,7 @@ const Navbar = () => {
                   }}
                 >
                   <UserRound className="size-4" />
-                  Profile
+                  {isAdmin || isStaff ? "Profile" : "My Orders"}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   variant="destructive"

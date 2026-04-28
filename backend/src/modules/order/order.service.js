@@ -22,6 +22,7 @@ import {
   findOrderByIdAndUserId,
   findOrders,
   findPaymentByOrderId,
+  findPaymentsByOrderIds,
   findProductsByIds,
   findVariantsByIds,
   updateOrderById,
@@ -242,10 +243,27 @@ export const listOrdersService = async ({
     countOrders(filter),
   ]);
 
+  const orderIds = orders
+    .map((order) => String(order?._id || "").trim())
+    .filter((id) => /^[a-fA-F0-9]{24}$/.test(id));
+  const payments = orderIds.length ? await findPaymentsByOrderIds(orderIds) : [];
+  const paymentByOrderId = new Map(
+    payments.map((payment) => [String(payment.orderId), payment]),
+  );
+
+  const ordersWithPayment = orders.map((order) => {
+    const payment = paymentByOrderId.get(String(order._id));
+    return {
+      ...order,
+      paymentId: payment?._id || null,
+      paymentMethod: payment?.method || order.paymentMethod || null,
+    };
+  });
+
   return {
     status: 200,
     body: {
-      orders,
+      orders: ordersWithPayment,
       meta: { page: safePage, limit: safeLimit, total },
     },
   };
