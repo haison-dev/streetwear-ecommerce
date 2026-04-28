@@ -8,6 +8,7 @@ import Shop from "./pages/Shop";
 import Register from "./pages/Register";
 import ProductDetail from "./pages/ProductDetail";
 import CartPage from "./pages/Cart";
+import MyOrdersPage from "./pages/MyOrders";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import StaffDashboard from "./pages/dashboard/StaffDashboard";
 import DashboardGate from "./pages/dashboard/DashboardGate";
@@ -29,6 +30,14 @@ const App = () => (
           <Route path="/register" element={<Register />} />
           <Route path="/product/:slug" element={<ProductDetail />} />
           <Route path="/cart" element={<CartPage />} />
+          <Route
+            path="/account/orders"
+            element={
+              <ProtectedRoute>
+                <MyOrdersPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/dashboard" element={<DashboardGate />} />
           <Route
             path="/dashboard/admin/*"

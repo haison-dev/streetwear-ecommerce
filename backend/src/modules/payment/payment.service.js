@@ -319,16 +319,100 @@ export const createVnpayCheckoutService = async ({
   actorId = null,
 }) => {
   const provider = getPaymentProviderStrategy("vnpay");
-  const attemptResult = await createPaymentAttemptService({
-    paymentId,
-    userId,
-    canReadAll,
-    payload: { ...payload, provider: "vnpay" },
-    actorId,
-  });
-  const paymentTransaction = attemptResult.body.paymentTransaction;
-  const payment = attemptResult.body.payment;
-  const orderId = String(attemptResult.body.orderId);
+  assertObjectId(paymentId, "Invalid payment id");
+
+  const payment = await findPaymentById(paymentId);
+  const { order } = await ensurePaymentAccess({ payment, userId, canReadAll });
+
+  if (String(payment.method || "").toLowerCase() !== "vnpay") {
+    throw makeError(400, "payment method must be vnpay", {
+      code: "PAYMENT_PROVIDER_MISMATCH",
+    });
+  }
+
+  // Allow retrying checkout when previous VNPay attempt marked payment failed
+  // but the order is still pending and can continue payment.
+  if (payment.status !== "pending") {
+    const orderStatus = String(order?.status || "").toLowerCase();
+    const paymentStatus = String(payment.status || "").toLowerCase();
+    if (paymentStatus === "failed" && orderStatus === "pending") {
+      await updatePaymentById(payment._id, { status: "pending" });
+      payment.status = "pending";
+    } else {
+      throw makeError(400, "Cannot create checkout for non-pending payment");
+    }
+  }
+
+  const latestTx = await findLatestPaymentTransactionByPaymentId(paymentId);
+  let paymentTransaction = latestTx;
+
+  if (latestTx?.status === "pending" && String(latestTx.method || "").toLowerCase() === "vnpay") {
+    const ttlMinutes = getPendingAttemptTtlMinutes();
+    if (isAttemptExpired(latestTx, ttlMinutes)) {
+      await updatePaymentTransactionById(latestTx._id, {
+        status: "failed",
+        failureReason: `Attempt expired after ${ttlMinutes} minutes`,
+        paidAt: null,
+      });
+      paymentTransaction = null;
+    } else {
+      // Pending locally does not always mean payable on gateway (e.g. VNPay code 01).
+      // Reconcile once before reusing this attempt.
+      try {
+        const providerResult = await provider.queryTransaction({
+          paymentTransaction: latestTx,
+          clientIp: payload?.clientIp,
+        });
+
+        if (providerResult.status === "failed") {
+          await updatePaymentTransactionStatusService({
+            transactionId: String(latestTx._id),
+            payload: {
+              status: "failed",
+              providerTransactionId: providerResult.providerTransactionId,
+              failureReason: providerResult.failureReason || "Gateway rejected attempt",
+              rawResponse: providerResult.rawResponse,
+            },
+            actorId: actorId || userId || null,
+            source: "vnpay_reconcile_checkout",
+          });
+          paymentTransaction = null;
+        }
+
+        if (providerResult.status === "paid") {
+          await updatePaymentTransactionStatusService({
+            transactionId: String(latestTx._id),
+            payload: {
+              status: "paid",
+              providerTransactionId: providerResult.providerTransactionId,
+              rawResponse: providerResult.rawResponse,
+            },
+            actorId: actorId || userId || null,
+            source: "vnpay_reconcile_checkout",
+          });
+          throw makeError(409, "Payment already completed", {
+            code: "PAYMENT_ALREADY_PAID",
+          });
+        }
+      } catch (err) {
+        if (err?.code === "PAYMENT_ALREADY_PAID") throw err;
+        // Ignore reconcile/network errors and keep existing behavior.
+      }
+    }
+  }
+
+  if (!paymentTransaction || paymentTransaction.status !== "pending") {
+    const attemptResult = await createPaymentAttemptService({
+      paymentId,
+      userId,
+      canReadAll,
+      payload: { ...payload, provider: "vnpay" },
+      actorId,
+    });
+    paymentTransaction = attemptResult.body.paymentTransaction;
+  }
+
+  const orderId = String(order._id);
   const { checkoutUrl } = provider.buildCheckout({
     payment,
     paymentTransaction,
@@ -339,10 +423,13 @@ export const createVnpayCheckoutService = async ({
   return {
     status: 201,
     body: {
-      ...attemptResult.body,
+      payment,
+      paymentTransaction,
+      orderId,
       checkoutUrl,
       nextAction: {
-        ...attemptResult.body.nextAction,
+        type: "gateway_pending",
+        provider: "vnpay",
         checkoutUrl,
       },
     },
@@ -509,6 +596,13 @@ export const updatePaymentTransactionStatusService = async ({
     const updatedPayment = await updatePaymentById(payment._id, paymentUpdate, session);
 
     const orderUpdate = { paymentStatus: targetStatus };
+    if (
+      targetStatus === "paid" &&
+      String(order.status || "").toLowerCase() === "pending" &&
+      ONLINE_PAYMENT_METHODS.has(String(order.paymentMethod || "").toLowerCase())
+    ) {
+      orderUpdate.status = "confirmed";
+    }
     const updatedOrder = await updateOrderById(order._id, orderUpdate, session);
 
     await logPaymentAuditSafe({
@@ -549,9 +643,36 @@ export const updatePaymentTransactionStatusService = async ({
 export const handleVnpayReturnService = async ({ query = {} }) => {
   const provider = getPaymentProviderStrategy("vnpay");
   const isValidSignature = provider.verifyCallback({ query });
-  const classified = isValidSignature
-    ? provider.classifyCallbackResult({ query }).status
-    : "invalid_signature";
+  const providerResult = isValidSignature
+    ? provider.classifyCallbackResult({ query })
+    : { status: "invalid_signature" };
+  const classified = providerResult.status;
+
+  if (isValidSignature) {
+    const txnRef = String(query.vnp_TxnRef || "").trim();
+    if (mongoose.Types.ObjectId.isValid(txnRef)) {
+      if (classified === "paid" || classified === "failed") {
+        try {
+          await updatePaymentTransactionStatusService({
+            transactionId: txnRef,
+            payload: {
+              status: classified,
+              providerTransactionId: providerResult.providerTransactionId,
+              failureReason: providerResult.failureReason,
+              rawResponse: providerResult.rawResponse,
+            },
+            source: "vnpay_return",
+            actorId: null,
+          });
+        } catch (err) {
+          // Ignore idempotent/stale conflicts to keep return UX smooth.
+          if (!(err?.status === 409 || err?.status === 404)) {
+            throw err;
+          }
+        }
+      }
+    }
+  }
 
   const frontendBase =
     String(process.env.PAYMENT_RESULT_URL || "").trim() ||

@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+﻿import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/layout/Navbar";
@@ -10,16 +10,19 @@ import {
   useUpdateCartItemMutation,
 } from "@/hooks/useCartQueries";
 import { useCreateOrderMutation } from "@/hooks/useOrderQueries";
+import { useCreateVnpayCheckoutMutation } from "@/hooks/usePaymentQueries";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 const CartPage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const token = useAuthStore((state) => state.token);
 
   const cartQuery = useCartQuery(Boolean(token));
   const updateItemMutation = useUpdateCartItemMutation();
   const removeItemMutation = useRemoveCartItemMutation();
   const createOrderMutation = useCreateOrderMutation();
+  const createVnpayCheckoutMutation = useCreateVnpayCheckoutMutation();
 
   const [shippingAddress, setShippingAddress] = useState({
     name: "",
@@ -29,6 +32,7 @@ const CartPage = () => {
     district: "",
     ward: "",
   });
+  const [paymentMethod, setPaymentMethod] = useState<"cod" | "vnpay">("cod");
 
   const items = cartQuery.data?.items || [];
   const summary = cartQuery.data?.summary;
@@ -43,6 +47,33 @@ const CartPage = () => {
       }, 0),
     [items],
   );
+
+  useEffect(() => {
+    const paymentStatus = searchParams.get("paymentStatus");
+    if (!paymentStatus) return;
+
+    if (paymentStatus === "success" || paymentStatus === "paid") {
+      toast.success("Payment successful");
+      navigate("/dashboard", { replace: true });
+      return;
+    }
+
+    if (paymentStatus === "failed") {
+      toast.error("Payment failed");
+    } else if (paymentStatus === "invalid_signature") {
+      toast.error("Payment verification failed");
+    } else if (paymentStatus === "pending") {
+      toast.message("Payment is pending");
+    } else {
+      toast.message(`Payment status: ${paymentStatus}`);
+    }
+
+    const next = new URLSearchParams(searchParams);
+    next.delete("paymentStatus");
+    next.delete("txnRef");
+    next.delete("provider");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams, navigate]);
 
   const handleUpdateQuantity = async (cartItemId: string, quantity: number) => {
     try {
@@ -78,16 +109,45 @@ const CartPage = () => {
 
   const handleCreateOrder = async () => {
     if (!canCheckout) return;
-    const requiredFields = Object.values(shippingAddress).every((value) => value.trim());
+    const requiredFields = [
+      shippingAddress.name,
+      shippingAddress.phone,
+      shippingAddress.address,
+      shippingAddress.city,
+      shippingAddress.district,
+    ].every((value) => value.trim());
     if (!requiredFields) {
       toast.error("Please fill full shipping address");
       return;
     }
+
     try {
       const result = await createOrderMutation.mutateAsync({
         shippingAddress,
-        paymentMethod: "cod",
+        paymentMethod,
       });
+
+      if (paymentMethod === "vnpay") {
+        const paymentId = result?.payment?._id;
+        if (!paymentId) {
+          toast.error("Cannot initialize VNPAY payment");
+          return;
+        }
+
+        const checkout = await createVnpayCheckoutMutation.mutateAsync({
+          paymentId,
+          locale: "vn",
+        });
+        const checkoutUrl = checkout?.checkoutUrl || checkout?.nextAction?.checkoutUrl;
+        if (!checkoutUrl) {
+          toast.error("VNPAY checkout URL not found");
+          return;
+        }
+
+        window.location.href = checkoutUrl;
+        return;
+      }
+
       toast.success("Order created successfully");
       const orderId = result?.order?._id;
       if (orderId) {
@@ -236,11 +296,40 @@ const CartPage = () => {
                 />
                 <input
                   className="w-full border rounded px-3 py-2 text-sm"
-                  placeholder="Ward"
+                  placeholder="Ward (optional)"
                   value={shippingAddress.ward}
                   onChange={(e) => setShippingAddress((prev) => ({ ...prev, ward: e.target.value }))}
                 />
               </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Payment method</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("cod")}
+                    className={`rounded border px-3 py-2 text-sm transition-colors ${
+                      paymentMethod === "cod"
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-border hover:bg-secondary"
+                    }`}
+                  >
+                    COD
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("vnpay")}
+                    className={`rounded border px-3 py-2 text-sm transition-colors ${
+                      paymentMethod === "vnpay"
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-border hover:bg-secondary"
+                    }`}
+                  >
+                    VNPAY
+                  </button>
+                </div>
+              </div>
+
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span className="font-semibold">{total.toLocaleString("vi-VN")} đ</span>
@@ -250,10 +339,20 @@ const CartPage = () => {
               )}
               <button
                 onClick={handleCreateOrder}
-                disabled={!canCheckout || createOrderMutation.isPending}
+                disabled={
+                  !canCheckout ||
+                  createOrderMutation.isPending ||
+                  createVnpayCheckoutMutation.isPending
+                }
                 className="w-full bg-foreground text-background py-2.5 rounded disabled:opacity-50"
               >
-                {createOrderMutation.isPending ? "Placing order..." : "Place Order (COD)"}
+                {createOrderMutation.isPending || createVnpayCheckoutMutation.isPending
+                  ? paymentMethod === "vnpay"
+                    ? "Redirecting to VNPAY..."
+                    : "Placing order..."
+                  : paymentMethod === "vnpay"
+                    ? "Pay with VNPAY"
+                    : "Place Order (COD)"}
               </button>
             </div>
           </div>
@@ -265,4 +364,3 @@ const CartPage = () => {
 };
 
 export default CartPage;
-

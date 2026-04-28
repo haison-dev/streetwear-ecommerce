@@ -3,7 +3,7 @@ import { hasAnyRole } from "@/lib/roles"
 import { Navigate } from "react-router-dom"
 
 interface ProtectedRouteProps {
-  allowRoles: string[]
+  allowRoles?: string[]
   children: React.ReactNode
 }
 
@@ -14,12 +14,14 @@ const ProtectedRoute = ({ allowRoles, children }: ProtectedRouteProps) => {
     return <Navigate to="/" replace />
   }
 
-  const rolesSource = Array.isArray(user.roleNames) && user.roleNames.length
-    ? user.roleNames
-    : user.roles
+  if (Array.isArray(allowRoles) && allowRoles.length > 0) {
+    const rolesSource = Array.isArray(user.roleNames) && user.roleNames.length
+      ? user.roleNames
+      : user.roles
 
-  if (!hasAnyRole(rolesSource, allowRoles)) {
-    return <Navigate to="/dashboard" replace />
+    if (!hasAnyRole(rolesSource, allowRoles)) {
+      return <Navigate to="/dashboard" replace />
+    }
   }
 
   return <>{children}</>

@@ -14,7 +14,7 @@ const orderItemSchema = new mongoose.Schema(
     },
     name: { type: String, required: true, trim: true },
     image: { type: String, trim: true },
-    size: Number,
+    size: { type: String, trim: true },
     color: { type: String, trim: true },
     quantity: { type: Number, required: true, min: 1 },
     price: { type: Number, required: true, min: 0 },
@@ -70,13 +70,12 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true, versionKey: false },
 );
 
-orderSchema.pre("validate", function (next) {
+orderSchema.pre("validate", function () {
   const itemsPrice = computeItemsPrice(this.items);
   this.itemsPrice = Math.max(0, itemsPrice);
   const shippingFee = Number(this.shippingFee || 0);
   const discount = Number(this.discount || 0);
   this.totalPrice = Math.max(0, this.itemsPrice + shippingFee - discount);
-  next();
 });
 
 orderSchema.index({ userId: 1, createdAt: -1 });
