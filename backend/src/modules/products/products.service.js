@@ -136,6 +136,40 @@ export const getProductBySlugService = async (slug) => {
   };
 };
 
+export const listProductVariantsService = async (productId) => {
+  if (!isObjectId(productId)) throw makeError(400, "Invalid product id");
+  const product = await findProductById(productId);
+  if (!product) throw makeError(404, "Product not found");
+
+  const variants = await findVariantsByProductId(productId);
+  const variantIds = variants.map((item) => item._id);
+  const inventories = await findInventoriesByVariantIds(variantIds);
+  const inventoryMap = new Map(
+    inventories.map((inventory) => [String(inventory.variantId), inventory]),
+  );
+  const variantsWithInventory = variants.map((variant) => {
+    const inventory = inventoryMap.get(String(variant._id));
+    return {
+      ...variant,
+      inventory: inventory
+        ? {
+            available: inventory.available,
+            reserved: inventory.reserved,
+            sold: inventory.sold,
+          }
+        : { available: 0, reserved: 0, sold: 0 },
+    };
+  });
+
+  return {
+    status: 200,
+    body: {
+      productId,
+      variants: variantsWithInventory,
+    },
+  };
+};
+
 export const getProductFilterStatsService = async (query = {}) => {
   const { categoryId, brandId, status = "active", q } = query;
   const filter = {};

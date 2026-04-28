@@ -6,6 +6,7 @@ import {
   getProductByIdService,
   getProductBySlugService,
   getProductFilterStatsService,
+  listProductVariantsService,
   listProducts,
   updateProductService,
 } from "./products.service.js";
@@ -22,6 +23,11 @@ export const getProductByIdController = asyncHandler(async (req, res) => {
 
 export const getProductBySlugController = asyncHandler(async (req, res) => {
   const result = await getProductBySlugService(req.params.slug);
+  return sendResult(res, result);
+});
+
+export const listProductVariantsController = asyncHandler(async (req, res) => {
+  const result = await listProductVariantsService(req.params.id);
   return sendResult(res, result);
 });
 

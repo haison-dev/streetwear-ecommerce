@@ -27,6 +27,7 @@ export const findProductBySlug = (slug) =>
 
 export const findVariantsByProductId = (productId) => ProductVariant.find({ productId }).lean();
 export const findInventoriesByVariantIds = (variantIds) => Inventory.find({ variantId: { $in: variantIds } }).lean();
+export const findInventoryByVariantId = (variantId) => Inventory.findOne({ variantId }).lean();
 
 export const aggregateProductFilterStats = (filter) =>
   Product.aggregate([

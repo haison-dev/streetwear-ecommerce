@@ -1,9 +1,11 @@
 import mongoose from "mongoose";
 import { makeError } from "../../shared/errors/index.js";
 import {
+  countAllPaymentTransactions,
   countPaymentTransactionsByPaymentId,
   createPaymentAuditLog,
   createPaymentTransaction,
+  findAllPaymentTransactions,
   findLatestPaymentTransactionByPaymentId,
   findOrderById,
   findPendingPaymentTransactionsBefore,
@@ -107,6 +109,98 @@ export const getPaymentByIdService = async ({
       payment,
       orderId: order._id,
       latestTransaction,
+    },
+  };
+};
+
+export const listAllPaymentTransactionsService = async ({
+  query = {},
+  canReadAll = false,
+}) => {
+  if (!canReadAll) {
+    throw makeError(403, "Forbidden", { code: "PAYMENT_FORBIDDEN_LIST_ALL" });
+  }
+
+  const {
+    status,
+    method,
+    paymentId,
+    orderId,
+    page = 1,
+    limit = 20,
+    sort = "newest",
+    createdFrom,
+    createdTo,
+  } = query;
+
+  const filter = {};
+  if (status) {
+    const normalized = String(status).trim().toLowerCase();
+    if (!PAYMENT_STATUS_VALUES.has(normalized)) {
+      throw makeError(400, "status must be one of: pending, paid, failed", {
+        code: "PAYMENT_STATUS_INVALID",
+      });
+    }
+    filter.status = normalized;
+  }
+
+  if (method) {
+    const normalizedMethod = String(method).trim().toLowerCase();
+    if (!ONLINE_PAYMENT_METHODS.has(normalizedMethod) && normalizedMethod !== "cod") {
+      throw makeError(400, "method must be one of: cod, momo, vnpay", {
+        code: "PAYMENT_METHOD_INVALID",
+      });
+    }
+    filter.method = normalizedMethod;
+  }
+
+  if (paymentId) {
+    assertObjectId(paymentId, "Invalid payment id");
+    filter.paymentId = paymentId;
+  }
+
+  if (orderId) {
+    assertObjectId(orderId, "Invalid order id");
+    filter.orderId = orderId;
+  }
+
+  if (createdFrom || createdTo) {
+    filter.createdAt = {};
+    if (createdFrom) {
+      const fromDate = new Date(createdFrom);
+      if (Number.isNaN(fromDate.getTime())) {
+        throw makeError(400, "Invalid createdFrom", { code: "PAYMENT_CREATED_FROM_INVALID" });
+      }
+      filter.createdAt.$gte = fromDate;
+    }
+    if (createdTo) {
+      const toDate = new Date(createdTo);
+      if (Number.isNaN(toDate.getTime())) {
+        throw makeError(400, "Invalid createdTo", { code: "PAYMENT_CREATED_TO_INVALID" });
+      }
+      filter.createdAt.$lte = toDate;
+    }
+  }
+
+  const safePage = Math.max(parseInt(page, 10) || 1, 1);
+  const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100);
+  const skip = (safePage - 1) * safeLimit;
+  const sortBy = sort === "oldest" ? { createdAt: 1 } : { createdAt: -1 };
+
+  const [transactions, total] = await Promise.all([
+    findAllPaymentTransactions({ filter, skip, limit: safeLimit, sort: sortBy }),
+    countAllPaymentTransactions(filter),
+  ]);
+
+  return {
+    status: 200,
+    body: {
+      transactions,
+      meta: {
+        page: safePage,
+        limit: safeLimit,
+        total,
+      },
     },
   };
 };

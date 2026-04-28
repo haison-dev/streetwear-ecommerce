@@ -303,6 +303,14 @@ Auth required. List attempts by `attemptNo` desc.
 **GET** `/payments/transactions/:id`
 Auth required.
 
+**GET** `/payments/transactions`
+Permission: `payment:read`. Backoffice list all transactions with optional filters:
+- `status=pending|paid|failed`
+- `method=cod|momo|vnpay`
+- `paymentId`, `orderId`
+- `createdFrom`, `createdTo`
+- `page`, `limit`, `sort=newest|oldest`
+
 **PATCH** `/payments/transactions/:id/status`
 Permission: `payment:write`. Internal/manual update endpoint.
 

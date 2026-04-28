@@ -11,14 +11,21 @@ export const findCartItemsByUserId = (userId) =>
 
 export const findProductById = (productId) =>
   Product.findById(productId).lean();
+export const findProductsByIds = (productIds) =>
+  Product.find({ _id: { $in: productIds } }).lean();
 
 export const findVariantById = (variantId) =>
   ProductVariant.findById(variantId).lean();
+export const findVariantsByIds = (variantIds) =>
+  ProductVariant.find({ _id: { $in: variantIds } }).lean();
 
 export const findInventoryByVariantId = (variantId) =>
   Inventory.findOne({ variantId }).lean();
+export const findInventoriesByVariantIds = (variantIds) =>
+  Inventory.find({ variantId: { $in: variantIds } }).lean();
 
-export const findOrderById = (id) => Order.findById(id).lean();
+export const findOrderById = (id, session = null) =>
+  Order.findById(id, null, session ? { session } : undefined).lean();
 
 export const findOrderByIdAndUserId = ({ id, userId }) =>
   Order.findOne({ _id: id, userId }).lean();

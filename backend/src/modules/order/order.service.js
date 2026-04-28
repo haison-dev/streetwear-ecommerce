@@ -16,14 +16,14 @@ import {
   createPaymentTransaction,
   deleteCartItemsByIds,
   findCartItemsByUserId,
-  findInventoryByVariantId,
+  findInventoriesByVariantIds,
   findLatestPaymentTransactionByOrderId,
   findOrderById,
   findOrderByIdAndUserId,
   findOrders,
   findPaymentByOrderId,
-  findProductById,
-  findVariantById,
+  findProductsByIds,
+  findVariantsByIds,
   updateOrderById,
   updatePaymentByOrderId,
   updatePaymentTransactionById,
@@ -45,6 +45,18 @@ const ORDER_SORT_MAP = {
   "totalPrice:desc": { totalPrice: -1, createdAt: -1 },
 };
 
+const mergeStockItems = (items = []) => {
+  const map = new Map();
+  for (const item of items) {
+    const key = String(item.variantId);
+    map.set(key, (map.get(key) || 0) + Number(item.quantity || 0));
+  }
+  return Array.from(map.entries()).map(([variantId, quantity]) => ({
+    variantId,
+    quantity,
+  }));
+};
+
 export const createOrderFromCartService = async ({ userId, payload }) => {
   const { shippingAddress, paymentMethod, note, couponCode } = payload || {};
 
@@ -56,17 +68,32 @@ export const createOrderFromCartService = async ({ userId, payload }) => {
   }
 
   const orderItems = [];
-  const stockItems = [];
+  const stockItemsRaw = [];
   const cartItemIds = [];
+
+  const productIds = [
+    ...new Set(cartItems.map((item) => String(item.productId)).filter(Boolean)),
+  ];
+  const variantIds = [
+    ...new Set(cartItems.map((item) => String(item.variantId)).filter(Boolean)),
+  ];
+
+  const [products, variants, inventories] = await Promise.all([
+    findProductsByIds(productIds),
+    findVariantsByIds(variantIds),
+    findInventoriesByVariantIds(variantIds),
+  ]);
+  const productMap = new Map(products.map((item) => [String(item._id), item]));
+  const variantMap = new Map(variants.map((item) => [String(item._id), item]));
+  const inventoryMap = new Map(
+    inventories.map((item) => [String(item.variantId), item]),
+  );
 
   for (const item of cartItems) {
     const { productId, variantId, quantity, _id: cartItemId } = item;
-
-    const [product, variant, inventory] = await Promise.all([
-      findProductById(productId),
-      findVariantById(variantId),
-      findInventoryByVariantId(variantId),
-    ]);
+    const product = productMap.get(String(productId));
+    const variant = variantMap.get(String(variantId));
+    const inventory = inventoryMap.get(String(variantId));
 
     if (!product) throw makeError(400, "Product not found");
     if (product.status !== "active")
@@ -98,9 +125,10 @@ export const createOrderFromCartService = async ({ userId, payload }) => {
       price: unitPrice,
     });
 
-    stockItems.push({ variantId, quantity });
+    stockItemsRaw.push({ variantId, quantity });
     cartItemIds.push(cartItemId);
   }
+  const stockItems = mergeStockItems(stockItemsRaw);
 
   const { shippingFee, discount, totalPrice } = computeOrderPricing({
     orderItems,
@@ -259,7 +287,7 @@ export const updateOrderStatusService = async ({ orderId, nextStatus }) => {
   try {
     session.startTransaction();
 
-    const order = await findOrderById(orderId);
+    const order = await findOrderById(orderId, session);
     if (!order) throw makeError(404, "Order not found");
 
     const allowedNext = ORDER_STATUS_TRANSITIONS[order.status] || new Set();
@@ -267,10 +295,10 @@ export const updateOrderStatusService = async ({ orderId, nextStatus }) => {
       throw makeError(400, `Cannot change order status from ${order.status} to ${targetStatus}`);
     }
 
-    const stockItems = (order.items || []).map((item) => ({
+    const stockItems = mergeStockItems((order.items || []).map((item) => ({
       variantId: item.variantId,
       quantity: item.quantity,
-    }));
+    })));
 
     const paymentUpdate = {};
     const paymentTransactionUpdate = {};

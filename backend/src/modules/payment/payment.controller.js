@@ -10,6 +10,7 @@ import {
   getPaymentTransactionByIdService,
   handleVnpayIpnService,
   handleVnpayReturnService,
+  listAllPaymentTransactionsService,
   listPaymentTransactionsService,
   updatePaymentTransactionStatusService,
 } from "./payment.service.js";
@@ -25,6 +26,17 @@ export const getPaymentById = asyncHandler(async (req, res) => {
   const result = await getPaymentByIdService({
     paymentId: req.params.id,
     userId,
+    canReadAll: canReadAllPayments(req.userPermissions),
+  });
+  return sendResult(res, result);
+});
+
+export const listAllPaymentTransactions = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  if (!userId) throw unauthorized();
+
+  const result = await listAllPaymentTransactionsService({
+    query: req.query || {},
     canReadAll: canReadAllPayments(req.userPermissions),
   });
   return sendResult(res, result);
