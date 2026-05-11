@@ -1,6 +1,7 @@
 import type { Brand, Category, Collection, Product } from "@/types";
 
 export type AdminStatus = "active" | "inactive";
+export type ProductStatus = "active" | "draft" | "archived";
 export type OrderStatus = "pending" | "confirmed" | "shipping" | "delivered" | "cancelled";
 
 export interface AdminListMeta {

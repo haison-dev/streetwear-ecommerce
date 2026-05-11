@@ -9,6 +9,8 @@ interface Props {
 }
 
 const ProductCard = ({ product, index = 0 }: Props) => {
+  const formatVnd = (value: number) => `${value.toLocaleString('vi-VN')} đ`;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -46,11 +48,11 @@ const ProductCard = ({ product, index = 0 }: Props) => {
           <div className="flex items-center gap-2">
             {product.salePrice ? (
               <>
-                <span className="font-body text-sm font-semibold">${product.salePrice.toFixed(2)}</span>
-                <span className="font-body text-sm text-muted-foreground line-through">${product.price.toFixed(2)}</span>
+                <span className="font-body text-sm font-semibold">{formatVnd(product.salePrice)}</span>
+                <span className="font-body text-sm text-muted-foreground line-through">{formatVnd(product.price)}</span>
               </>
             ) : (
-              <span className="font-body text-sm font-semibold">${product.price.toFixed(2)}</span>
+              <span className="font-body text-sm font-semibold">{formatVnd(product.price)}</span>
             )}
           </div>
           <div className="flex items-center gap-1">

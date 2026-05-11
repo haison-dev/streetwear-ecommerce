@@ -13,8 +13,6 @@ interface Props {
 }
 
 const LoginPanel = ({ open, onClose }: Props) => {
-  if (typeof document === "undefined") return null;
-
   const navigate = useNavigate();
   const { login, loading, token, user } = useAuthStore();
   const [email, setEmail] = useState("");
@@ -38,6 +36,8 @@ const LoginPanel = ({ open, onClose }: Props) => {
     if (!email || !password) return;
     await login(email, password);
   };
+
+  if (typeof document === "undefined") return null;
 
   return createPortal(
     <AnimatePresence>
