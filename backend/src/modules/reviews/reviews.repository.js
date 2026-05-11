@@ -5,7 +5,7 @@ export const findReviewsByProductId = ({ productId, skip, limit, sort }) =>
     .sort(sort)
     .skip(skip)
     .limit(limit)
-    .populate({ path: "userId", select: "name email" })
+    .populate({ path: "userId", select: "displayName email" })
     .lean();
 
 export const countReviewsByProductId = (productId) =>

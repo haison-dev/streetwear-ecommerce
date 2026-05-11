@@ -8,6 +8,7 @@ import type {
   AdminOrdersListResponse,
   AdminProductListResponse,
   AdminPermissionsListResponse,
+  ProductStatus,
   AdminRolesListResponse,
   AdminStatus,
   AdminUsersListResponse,
@@ -31,7 +32,7 @@ export const adminService = {
     images?: string[];
     price: number;
     salePrice?: number;
-    status?: AdminStatus;
+    status?: ProductStatus;
   }) => {
     const res = await api.post("/products", payload);
     return res.data;
@@ -46,7 +47,7 @@ export const adminService = {
       images: string[];
       price: number;
       salePrice: number;
-      status: AdminStatus;
+      status: ProductStatus;
     }>,
   ) => {
     const res = await api.patch(`/products/${id}`, payload);

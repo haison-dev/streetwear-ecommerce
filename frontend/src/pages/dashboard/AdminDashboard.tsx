@@ -59,7 +59,7 @@ import {
   useUpdateUserRolesMutation,
 } from "@/hooks/useAdminDashboardQueries";
 import { adminService } from "@/services/adminService";
-import type { AdminStatus, OrderStatus, Product } from "@/types";
+import type { AdminStatus, OrderStatus, Product, ProductStatus } from "@/types";
 import { toast } from "sonner";
 import { getRoleNames } from "@/lib/roles";
 import {
@@ -91,7 +91,7 @@ type ProductFormState = {
   price: string;
   salePrice: string;
   description: string;
-  status: AdminStatus;
+  status: ProductStatus;
   categoryId: string;
   brandId: string;
   images: string[];
@@ -99,7 +99,7 @@ type ProductFormState = {
 
 type DashboardProduct = Product & {
   description?: string;
-  status?: AdminStatus;
+  status?: ProductStatus;
 };
 
 const buildEmptyProductForm = (): ProductFormState => ({
@@ -901,7 +901,8 @@ const AdminDashboard = () => {
             <SelectContent>
               <SelectItem value="all">All status</SelectItem>
               <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="archived">Archived</SelectItem>
             </SelectContent>
           </Select>
           <Select value={productBrandFilter} onValueChange={setProductBrandFilter}>
@@ -972,7 +973,7 @@ const AdminDashboard = () => {
                       onValueChange={(value) => {
                         void updateProductStatusMutation.mutateAsync({
                           productId: product._id,
-                          status: value as AdminStatus,
+                          status: value as ProductStatus,
                         });
                       }}
                     >
@@ -986,7 +987,8 @@ const AdminDashboard = () => {
                         sideOffset={6}
                       >
                         <SelectItem value="active">active</SelectItem>
-                        <SelectItem value="inactive">inactive</SelectItem>
+                        <SelectItem value="draft">draft</SelectItem>
+                        <SelectItem value="archived">archived</SelectItem>
                       </SelectContent>
                     </Select>
                   ) : (
@@ -1244,7 +1246,7 @@ const AdminDashboard = () => {
                   onValueChange={(value) =>
                     setProductForm((current) => ({
                       ...current,
-                      status: value as AdminStatus,
+                      status: value as ProductStatus,
                     }))
                   }
                 >
@@ -1253,7 +1255,8 @@ const AdminDashboard = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">active</SelectItem>
-                    <SelectItem value="inactive">inactive</SelectItem>
+                    <SelectItem value="draft">draft</SelectItem>
+                    <SelectItem value="archived">archived</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

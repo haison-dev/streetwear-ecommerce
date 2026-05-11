@@ -21,6 +21,7 @@ export interface Product {
   salePrice?: number;
   rating: number;
   reviewCount: number;
+  status?: "active" | "draft" | "archived";
   brandId: Brand;
   categoryId: Category;
 }
@@ -52,6 +53,16 @@ export interface FiltersResponse {
     minRating: number;
     maxRating: number;
   };
+}
+
+export interface Review {
+  _id: string;
+  userId?: string | { _id: string; displayName?: string; email?: string };
+  productId: string;
+  rating: number;
+  comment?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CollectionCriteria {

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { queryKeys } from "@/lib/queryKeys";
 import { adminService } from "@/services/adminService";
-import type { AdminStatus, OrderStatus } from "@/types";
+import type { AdminStatus, OrderStatus, ProductStatus } from "@/types";
 
 export const useAdminProductsQuery = (params: { page: number; limit: number }) =>
   useQuery({
@@ -72,7 +72,7 @@ export const useCreateProductMutation = () => {
 export const useUpdateProductStatusMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ productId, status }: { productId: string; status: AdminStatus }) =>
+    mutationFn: ({ productId, status }: { productId: string; status: ProductStatus }) =>
       adminService.updateProduct(productId, { status }),
     onSuccess: () => {
       toast.success("Updated product status");

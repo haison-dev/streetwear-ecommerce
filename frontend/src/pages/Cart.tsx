@@ -34,7 +34,7 @@ const CartPage = () => {
   });
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "vnpay">("cod");
 
-  const items = cartQuery.data?.items || [];
+  const items = useMemo(() => cartQuery.data?.items || [], [cartQuery.data?.items]);
   const summary = cartQuery.data?.summary;
   const hasInvalidItems = (summary?.invalidItems || 0) > 0;
   const canCheckout = items.length > 0 && !hasInvalidItems;
@@ -54,7 +54,7 @@ const CartPage = () => {
 
     if (paymentStatus === "success" || paymentStatus === "paid") {
       toast.success("Payment successful");
-      navigate("/dashboard", { replace: true });
+      navigate("/account/orders", { replace: true });
       return;
     }
 
@@ -151,9 +151,9 @@ const CartPage = () => {
       toast.success("Order created successfully");
       const orderId = result?.order?._id;
       if (orderId) {
-        navigate(`/dashboard?orderId=${orderId}`);
+        navigate(`/account/orders?orderId=${orderId}`);
       } else {
-        navigate("/dashboard");
+        navigate("/account/orders");
       }
     } catch (error: unknown) {
       const message =

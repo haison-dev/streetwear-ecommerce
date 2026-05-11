@@ -25,6 +25,16 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { toast } from "sonner";
 
 type OrderStatus = "all" | "pending" | "confirmed" | "shipping" | "delivered" | "cancelled";
+type OrderListItem = {
+  _id: string;
+  orderNumber?: string;
+  createdAt?: string;
+  totalPrice?: number;
+  paymentStatus?: string;
+  status?: string;
+  paymentMethod?: string;
+  paymentId?: string;
+};
 
 const badgeVariant = (value?: string) => {
   const normalized = String(value || "").toLowerCase();
@@ -155,7 +165,7 @@ const MyOrdersPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orders.map((order: any) => (
+                {orders.map((order: OrderListItem) => (
                   <TableRow key={order._id}>
                     <TableCell className="font-medium">
                       {order.orderNumber || String(order._id).slice(-8)}
