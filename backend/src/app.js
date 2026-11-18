@@ -2,7 +2,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import express from "express";
 import { registerModuleRoutes } from "./modules/registerRoutes.js";
-import { notFound } from "./shared/errors/index.js";
+import { forbidden, notFound } from "./shared/errors/index.js";
 import { errorHandler } from "./shared/middleware/errorHandler.js";
 
 const parseAllowedOrigins = () => {
@@ -46,7 +46,7 @@ export const createApp = () => {
         if (!origin) return callback(null, true);
         if (allowedOrigins.has(origin)) return callback(null, true);
         if (isVercelPreviewOrigin(origin)) return callback(null, true);
-        return callback(new Error(`CORS blocked for origin: ${origin}`));
+        return callback(forbidden(`CORS blocked for origin: ${origin}`));
       },
       credentials: true,
     }),

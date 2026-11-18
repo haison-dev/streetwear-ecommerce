@@ -1,16 +1,18 @@
 import Navbar from '@/components/layout/Navbar';
-import HeroSlider from '@/components/HeroSlider';
+import HomeRack from '@/components/home/HomeRack';
 import FeaturedProducts from '@/components/FeaturedProducts';
 import ShopCategories from '@/components/ShopCategories';
 import Footer from '@/components/layout/Footer';
 
 const Home = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="home-page min-h-screen">
       <Navbar />
-      <HeroSlider />
-      <ShopCategories />
-      <FeaturedProducts />
+      <main>
+        <HomeRack />
+        <ShopCategories />
+        <FeaturedProducts />
+      </main>
       <Footer />
     </div>  
   ) 

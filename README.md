@@ -97,7 +97,7 @@ Create `frontend/.env` if the API URL differs from the default.
 VITE_API_URL=http://localhost:5001/api
 ```
 
-The frontend defaults to `http://localhost:5000/api` in development if `VITE_API_URL` is not set, while the backend defaults to port `5001`. Set `VITE_API_URL` during local development unless you run the backend on port `5000`.
+The frontend defaults to `http://localhost:5001/api` in development. If Vite runs on another port, such as `5174`, add that origin to `CLIENT_URLS` and restart the backend. Set `VITE_API_URL` if the backend uses a different address.
 
 ## Installation
 

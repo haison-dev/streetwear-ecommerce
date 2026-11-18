@@ -6,6 +6,8 @@ const FeaturedProducts = () => {
   const { data, isLoading, isError } = useFeaturedProductsQuery();
   const featured = data?.products || [];
 
+  if (!isLoading && !isError && featured.length === 0) return null;
+
   return (
     <section className="py-20 px-6 md:px-12 lg:px-20 xl:px-28 bg-secondary">
       <div>
