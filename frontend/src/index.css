@@ -6,52 +6,58 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 4%;
+    --background: 50 33.33% 96.47%;
+    --foreground: 75 8.33% 9.41%;
+    --surface: 53.33 20.93% 91.57%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 4%;
+    --card: var(--background);
+    --card-foreground: var(--foreground);
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 4%;
+    --popover: var(--background);
+    --popover-foreground: var(--foreground);
 
-    --primary: 0 0% 4%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 72.93 98.82% 66.86%;
+    --primary-foreground: var(--foreground);
 
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 4%;
+    --secondary: var(--surface);
+    --secondary-foreground: var(--foreground);
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: var(--surface);
+    --muted-foreground: 67 6% 31%;
 
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 4%;
+    --accent: var(--surface);
+    --accent-foreground: var(--foreground);
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 0 0% 4%;
+    --border: 55 13% 82%;
+    --input: var(--border);
+    --ring: 72 41% 23%;
 
-    --radius: 0.75rem;
+    --radius: 0.25rem;
 
-    --cta: 0 0% 4%;
-    --cta-foreground: 0 0% 100%;
+    --cta: var(--primary);
+    --cta-foreground: var(--foreground);
 
     --sale: 0 72% 51%;
 
     --footer-bg: 0 0% 4%;
     --footer-fg: 0 0% 100%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: var(--surface);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--foreground);
+    --sidebar-accent: var(--background);
+    --sidebar-accent-foreground: var(--foreground);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--ring);
+    --chart-1: 72 70% 44%;
+    --chart-2: 69 15% 43%;
+    --chart-3: 16 52% 45%;
+    --chart-4: 28 40% 58%;
+    --chart-5: 75 8% 20%;
   }
 }
 
@@ -64,19 +70,30 @@
     font-family: 'Space Grotesk', sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Bebas Neue', sans-serif;
-    letter-spacing: 0.02em;
+    font-weight: 700;
+    letter-spacing: -0.035em;
   }
 }
 
 @layer utilities {
   .font-display {
-    font-family: 'Bebas Neue', sans-serif;
-    letter-spacing: 0.02em;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.055em;
   }
+  .font-brand { font-family: 'Bebas Neue', sans-serif; }
   .font-body {
     font-family: 'Space Grotesk', sans-serif;
   }
+}
+
+@layer components {
+  .store-container { @apply mx-auto w-full max-w-[1536px] px-4 sm:px-8 lg:px-12; }
+  .store-title { @apply font-display text-4xl leading-none md:text-6xl; }
+  .store-label { @apply text-xs font-semibold uppercase tracking-widest text-muted-foreground; }
+  .store-panel { @apply border border-border bg-secondary; }
+  .store-action { @apply inline-flex min-h-11 items-center justify-center gap-2 border border-foreground bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-colors hover:bg-foreground hover:text-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-50; }
+  .store-field { @apply min-h-11 w-full border border-input bg-background px-3 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring; }
 }
 
 /* Marquee animation */
@@ -96,4 +113,4 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-  
+

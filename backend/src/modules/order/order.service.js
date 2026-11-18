@@ -38,6 +38,12 @@ const ORDER_STATUS_TRANSITIONS = {
   cancelled: new Set([]),
 };
 const ORDER_STATUSES = Object.keys(ORDER_STATUS_TRANSITIONS);
+const isUnpaidOnlineOrder = (order) => order.paymentMethod && order.paymentMethod !== "cod" && order.paymentStatus !== "paid";
+const isPaidOnlineOrder = (order) => order.paymentMethod && order.paymentMethod !== "cod" && order.paymentStatus === "paid";
+const nextOrderStatuses = (order) => [...(ORDER_STATUS_TRANSITIONS[order.status] || [])].filter((status) =>
+  !(status === "shipping" && isUnpaidOnlineOrder(order)) &&
+  !(status === "cancelled" && isPaidOnlineOrder(order))
+);
 
 const ORDER_SORT_MAP = {
   newest: { createdAt: -1 },
@@ -58,11 +64,7 @@ const mergeStockItems = (items = []) => {
   }));
 };
 
-export const createOrderFromCartService = async ({ userId, payload }) => {
-  const { shippingAddress, paymentMethod, note, couponCode } = payload || {};
-
-  validateCreateOrderFromCartInput({ userId, payload });
-
+const prepareCartOrder = async (userId) => {
   const cartItems = await findCartItemsByUserId(userId);
   if (!cartItems.length) {
     throw makeError(400, "Cart is empty");
@@ -70,7 +72,7 @@ export const createOrderFromCartService = async ({ userId, payload }) => {
 
   const orderItems = [];
   const stockItemsRaw = [];
-  const cartItemIds = [];
+  const cartSnapshot = [];
 
   const productIds = [
     ...new Set(cartItems.map((item) => String(item.productId)).filter(Boolean)),
@@ -127,15 +129,34 @@ export const createOrderFromCartService = async ({ userId, payload }) => {
     });
 
     stockItemsRaw.push({ variantId, quantity });
-    cartItemIds.push(cartItemId);
+    cartSnapshot.push({ _id: cartItemId, productId, variantId, quantity });
   }
-  const stockItems = mergeStockItems(stockItemsRaw);
+  return { orderItems, stockItems: mergeStockItems(stockItemsRaw), cartSnapshot };
+};
 
+export const quoteOrderFromCartService = async ({ userId, city, couponCode }) => {
+  if (!userId) throw makeError(400, "UserId must exist");
+  if (typeof city !== "string" || typeof couponCode !== "string") {
+    throw makeError(400, "City and coupon code must be text");
+  }
+  const { orderItems } = await prepareCartOrder(userId);
+  return { status: 200, body: computeOrderPricing({ orderItems, shippingAddress: { city }, couponCode }) };
+};
+
+export const createOrderFromCartService = async ({ userId, payload }) => {
+  const { shippingAddress, paymentMethod, note, couponCode, expectedTotal } = payload || {};
+  validateCreateOrderFromCartInput({ userId, payload });
+
+  const { orderItems, stockItems, cartSnapshot } = await prepareCartOrder(userId);
   const { shippingFee, discount, totalPrice } = computeOrderPricing({
     orderItems,
     shippingAddress,
     couponCode,
   });
+
+  if (expectedTotal !== undefined && totalPrice !== expectedTotal) {
+    throw makeError(409, "Order pricing changed. Review the updated total before placing your order.");
+  }
 
   const initialOrderStatus = "pending";
   const initialPaymentStatus = "pending";
@@ -191,7 +212,10 @@ export const createOrderFromCartService = async ({ userId, payload }) => {
       session,
     );
 
-    await deleteCartItemsByIds({ userId, ids: cartItemIds }, session);
+    const removed = await deleteCartItemsByIds({ userId, items: cartSnapshot }, session);
+    if (removed.deletedCount !== cartSnapshot.length) {
+      throw makeError(409, "Cart changed. Review your bag before placing your order.");
+    }
 
     await session.commitTransaction();
 
@@ -211,6 +235,7 @@ export const listOrdersService = async ({
   userId,
   query = {},
   canReadAllOrders = false,
+  includeOrderActions = false,
 }) => {
   const { status, page = 1, limit = 20, sort = "newest", userId: filterUserId } = query;
 
@@ -257,6 +282,7 @@ export const listOrdersService = async ({
       ...order,
       paymentId: payment?._id || null,
       paymentMethod: payment?.method || order.paymentMethod || null,
+      ...(includeOrderActions ? { nextStatuses: nextOrderStatuses(order) } : {}),
     };
   });
 
@@ -311,6 +337,12 @@ export const updateOrderStatusService = async ({ orderId, nextStatus }) => {
     const allowedNext = ORDER_STATUS_TRANSITIONS[order.status] || new Set();
     if (!allowedNext.has(targetStatus)) {
       throw makeError(400, `Cannot change order status from ${order.status} to ${targetStatus}`);
+    }
+    if (targetStatus === "shipping" && isUnpaidOnlineOrder(order)) {
+      throw makeError(409, "Online payment must be confirmed before shipping");
+    }
+    if (targetStatus === "cancelled" && isPaidOnlineOrder(order)) {
+      throw makeError(409, "A paid online order requires a refund before cancellation");
     }
 
     const stockItems = mergeStockItems((order.items || []).map((item) => ({

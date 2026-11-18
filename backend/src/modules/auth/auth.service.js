@@ -61,9 +61,13 @@ export const registerService = async (payload = {}) => {
 
 export const loginService = async (payload = {}) => {
   const { email, password } = payload;
-  if (!email || !password) throw makeError(400, "All fields are required.");
+  if (typeof email !== "string" || typeof password !== "string" || !email.trim() || !password) {
+    throw makeError(400, "All fields are required.");
+  }
 
-  const normalizedEmail = (email || "").trim().toLowerCase();
+  const identifier = email.trim().toLowerCase();
+  const localAdminEmail = process.env.NODE_ENV === "production" ? "" : process.env.LOCAL_ADMIN_LOGIN_EMAIL;
+  const normalizedEmail = identifier === "admin" && localAdminEmail ? localAdminEmail : identifier;
   if (!validator.isEmail(normalizedEmail)) throw makeError(400, "Invalid email!");
 
   const user = await findUserByEmail(normalizedEmail);

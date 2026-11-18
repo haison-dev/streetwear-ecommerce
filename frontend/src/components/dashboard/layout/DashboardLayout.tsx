@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import type { SidebarData } from "@/components/sidebar/app-sidebar";
+import { Link } from "react-router-dom";
+import { ArrowUpRight } from "lucide-react";
 
 interface Props {
   title: string;
@@ -27,7 +29,7 @@ const DashboardLayout = ({ title, section, data, children }: Props) => {
     <SidebarProvider>
       <AppSidebar data={data} />
       <SidebarInset className="min-w-0">
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border">
+        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-border bg-background px-4">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator
@@ -37,7 +39,7 @@ const DashboardLayout = ({ title, section, data, children }: Props) => {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">{title}</BreadcrumbLink>
+                  <BreadcrumbLink asChild><Link to="/dashboard">{title}</Link></BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
@@ -46,6 +48,9 @@ const DashboardLayout = ({ title, section, data, children }: Props) => {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
+          <Link to="/shop" className="inline-flex items-center gap-1 text-xs font-semibold hover:underline">
+            Storefront <ArrowUpRight size={14} aria-hidden="true" />
+          </Link>
         </header>
         <div className="flex flex-1 flex-col gap-4 pt-0">
           {children}

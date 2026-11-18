@@ -13,8 +13,8 @@ export interface CartItem {
   lineTotal: number;
   isAvailable: boolean;
   availableStock: number;
-  product: unknown;
-  variant: unknown;
+  product: { name?: string; images?: string[]; slug?: string } | null;
+  variant: { size?: string; color?: string } | null;
 }
 
 export interface CartResponse {

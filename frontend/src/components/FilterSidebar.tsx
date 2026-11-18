@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { formatVnd } from '@/lib/money';
 import { Star } from 'lucide-react';
 import type { Brand, Category } from '@/types';
 
@@ -31,11 +31,7 @@ const FilterSidebar = ({ filters, categories, brands, stats, onChange }: Props) 
   ].filter(Boolean).length;
 
   return (
-    <motion.aside
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="space-y-8"
-    >
+    <aside className="space-y-6">
       <div className="flex items-center gap-2">
         <h3 className="font-display text-2xl">Filters</h3>
         {activeCount > 0 && (
@@ -100,15 +96,15 @@ const FilterSidebar = ({ filters, categories, brands, stats, onChange }: Props) 
         <h4 className="font-body text-xs tracking-widest uppercase text-muted-foreground mb-3">Price</h4>
         <div className="space-y-3">
           <div className="flex items-center gap-2 font-body text-sm">
-            <span>${filters.minPrice}</span>
-            <span className="text-muted-foreground">—</span>
-            <span>${filters.maxPrice}</span>
+            <span>{formatVnd(filters.minPrice)}</span>
+            <span className="text-muted-foreground">–</span>
+            <span>{formatVnd(filters.maxPrice)}</span>
           </div>
           <input
-            type="range"
+            type="range" aria-label="Maximum price" disabled={stats.maxPrice <= stats.minPrice}
             min={stats.minPrice}
             max={stats.maxPrice}
-            value={filters.maxPrice}
+            value={Math.min(stats.maxPrice, Math.max(stats.minPrice, filters.maxPrice))}
             onChange={e => onChange({ ...filters, maxPrice: Number(e.target.value) })}
             className="w-full accent-foreground"
           />
@@ -143,7 +139,7 @@ const FilterSidebar = ({ filters, categories, brands, stats, onChange }: Props) 
           Clear all filters
         </button>
       )}
-    </motion.aside>
+    </aside>
   );
 };
 

@@ -8,13 +8,16 @@ import {
 } from "./wishlist.repository.js";
 
 const isObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
+const getItems = (wishlist) => wishlist?.items?.length
+  ? wishlist.items
+  : (wishlist?.productIds || []).map((productId) => ({ productId }));
 
 export const getWishlistService = async ({ userId }) => {
   const wishlist = await findWishlistByUserId(userId);
   return {
     status: 200,
     body: {
-      items: wishlist?.items || [],
+      items: getItems(wishlist),
     },
   };
 };
@@ -33,7 +36,7 @@ export const addWishlistItemService = async ({ userId, productId }) => {
     status: 201,
     body: {
       message: "Item added to wishlist",
-      items: wishlist?.items || [],
+      items: getItems(wishlist),
     },
   };
 };

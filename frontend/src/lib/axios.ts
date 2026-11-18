@@ -2,7 +2,7 @@ import axios from "axios";
 import { useAuthStore } from "@/stores/useAuthStore";
 
 const defaultApiUrl = import.meta.env.DEV
-  ? "http://localhost:5000/api"
+  ? "http://localhost:5001/api"
   : "https://streetwear-ecommerce.onrender.com/api";
 
 const apiBaseUrl = String(import.meta.env.VITE_API_URL || defaultApiUrl).replace(

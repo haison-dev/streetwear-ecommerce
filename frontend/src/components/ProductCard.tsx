@@ -1,70 +1,30 @@
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Star } from 'lucide-react';
-import type { Product } from '@/types/index';
+import { Link } from "react-router-dom";
+import { ArrowUpRight, ImageOff } from "lucide-react";
+import type { Product } from "@/types";
+import { formatVnd } from "@/lib/money";
 
-interface Props {
-  product: Product;
-  index?: number;
-}
-
-const ProductCard = ({ product, index = 0 }: Props) => {
-  const formatVnd = (value: number) => `${value.toLocaleString('vi-VN')} đ`;
+export default function ProductCard({ product }: { product: Product }) {
+  const image = product.images?.[0];
+  const price = product.salePrice ?? product.price;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-50px' }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-    >
-      <Link to={`/product/${product.slug}`} className="group block">
-        <div className="relative overflow-hidden rounded-lg bg-secondary mb-3">
-          <motion.img
-            src={product.images[0]}
-            alt={product.name}
-            className="w-full aspect-square object-cover"
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.4 }}
-          />
-          {/* Category pill */}
-          <span className="absolute top-3 left-3 bg-foreground text-background font-body text-xs px-3 py-1 rounded-full uppercase tracking-wider">
-            {product.categoryId.name}
-          </span>
-          {product.salePrice && (
-            <span className="absolute top-3 right-3 bg-sale text-background font-body text-xs px-3 py-1 rounded-full uppercase tracking-wider">
-              Sale
-            </span>
-          )}
+    <Link to={`/product/${product.slug}`} className="group flex h-full min-w-0 flex-col border border-border focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">
+      <div className="relative overflow-hidden bg-secondary">
+        {image ? (
+          <img src={image} alt="" className="aspect-[4/5] w-full object-cover motion-safe:transition-transform motion-safe:duration-300 group-hover:scale-105" loading="lazy" />
+        ) : <div className="grid aspect-[4/5] place-items-center text-muted-foreground"><ImageOff aria-hidden="true" size={24} /></div>}
+        {price < product.price && <span className="absolute left-2 top-2 border border-foreground bg-primary px-2 py-1 text-[10px] font-bold uppercase">Sale</span>}
+      </div>
+      <div className="flex flex-1 flex-col gap-1 border-t border-border p-3 group-hover:bg-secondary sm:p-4">
+        {product.brandId?.name && <p className="store-label">{product.brandId.name}</p>}
+        <h3 className="flex items-start justify-between gap-1 text-sm font-bold">
+          <span>{product.name}</span><ArrowUpRight size={16} className="shrink-0" aria-hidden="true" />
+        </h3>
+        <div className="mt-auto flex flex-wrap gap-2 pt-1 text-sm">
+          <span className="font-semibold">{formatVnd(price)}</span>
+          {price < product.price && <span className="text-muted-foreground line-through">{formatVnd(product.price)}</span>}
         </div>
-
-        <div className="space-y-1">
-          <p className="font-body text-xs text-muted-foreground uppercase tracking-wider">
-            {product.brandId.name}
-          </p>
-          <h3 className="font-body text-sm font-medium group-hover:opacity-70 transition-opacity">
-            {product.name}
-          </h3>
-          <div className="flex items-center gap-2">
-            {product.salePrice ? (
-              <>
-                <span className="font-body text-sm font-semibold">{formatVnd(product.salePrice)}</span>
-                <span className="font-body text-sm text-muted-foreground line-through">{formatVnd(product.price)}</span>
-              </>
-            ) : (
-              <span className="font-body text-sm font-semibold">{formatVnd(product.price)}</span>
-            )}
-          </div>
-          <div className="flex items-center gap-1">
-            <Star size={12} className="fill-foreground" />
-            <span className="font-body text-xs text-muted-foreground">
-              {product.rating} ({product.reviewCount})
-            </span>
-          </div>
-        </div>
-      </Link>
-    </motion.div>
+      </div>
+    </Link>
   );
-};
-
-export default ProductCard;
+}

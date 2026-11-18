@@ -53,9 +53,9 @@ export const createPaymentTransaction = async (payload, session = null) => {
   return transaction;
 };
 
-export const deleteCartItemsByIds = async ({ userId, ids }, session = null) =>
+export const deleteCartItemsByIds = async ({ userId, items }, session = null) =>
   CartItem.deleteMany(
-    { userId, _id: { $in: ids } },
+    { userId, $or: items },
     session ? { session } : undefined,
   );
 

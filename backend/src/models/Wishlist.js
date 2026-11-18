@@ -17,7 +17,7 @@ const wishlistSchema = new mongoose.Schema(
   { timestamps: true, versionKey: false }
 );
 
-wishlistSchema.pre('validate', function (next) {
+wishlistSchema.pre('validate', function () {
   if (!this.items?.length && this.productIds?.length) {
     this.items = this.productIds.map((productId) => ({ productId }));
   }
@@ -25,10 +25,7 @@ wishlistSchema.pre('validate', function (next) {
     const ids = new Set(this.items.map((item) => String(item.productId)));
     this.productIds = Array.from(ids).map((id) => new mongoose.Types.ObjectId(id));
   }
-  next();
 });
-
-wishlistSchema.index({ userId: 1 }, { unique: true });
 
 export default mongoose.model('Wishlist', wishlistSchema);
 
