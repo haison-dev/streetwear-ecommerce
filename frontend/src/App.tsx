@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -9,14 +10,19 @@ import Register from "./pages/Register";
 import ProductDetail from "./pages/ProductDetail";
 import CartPage from "./pages/Cart";
 import MyOrdersPage from "./pages/MyOrders";
-import AdminDashboard from "./pages/dashboard/AdminDashboard";
-import StaffDashboard from "./pages/dashboard/StaffDashboard";
 import DashboardGate from "./pages/dashboard/DashboardGate";
-import AccountPage from "./pages/dashboard/AccountPage";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import StorefrontLayout from "./components/layout/StorefrontLayout";
+import Wishlist from "./pages/Wishlist";
+import OrderDetail from "./pages/OrderDetail";
 
 const queryClient = new QueryClient();
+const AdminDashboard = lazy(() => import("./pages/dashboard/AdminDashboard"));
+const StaffDashboard = lazy(() => import("./pages/dashboard/StaffDashboard"));
+const AccountPage = lazy(() => import("./pages/dashboard/AccountPage"));
+
+const DashboardLoading = () => <p className="store-container py-12" role="status">Loading dashboard…</p>;
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -25,25 +31,23 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/shop" element={<Shop />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/product/:slug" element={<ProductDetail />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route
-            path="/account/orders"
-            element={
-              <ProtectedRoute>
-                <MyOrdersPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route element={<StorefrontLayout />}>
+            <Route index element={<Home />} />
+            <Route path="shop" element={<Shop />} />
+            <Route path="register" element={<Register />} />
+            <Route path="product/:slug" element={<ProductDetail />} />
+            <Route path="cart" element={<CartPage />} />
+            <Route path="account/wishlist" element={<Wishlist />} />
+            <Route path="account/orders" element={<MyOrdersPage />} />
+            <Route path="account/orders/:orderId" element={<OrderDetail />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
           <Route path="/dashboard" element={<DashboardGate />} />
           <Route
             path="/dashboard/admin/*"
             element={
               <ProtectedRoute allowRoles={["admin"]}>
-                <AdminDashboard />
+                  <Suspense fallback={<DashboardLoading />}><AdminDashboard /></Suspense>
               </ProtectedRoute>
             }
           />
@@ -51,7 +55,7 @@ const App = () => (
             path="/dashboard/staff"
             element={
               <ProtectedRoute allowRoles={["staff"]}>
-                <StaffDashboard />
+                  <Suspense fallback={<DashboardLoading />}><StaffDashboard /></Suspense>
               </ProtectedRoute>
             }
           />
@@ -59,7 +63,7 @@ const App = () => (
             path="/dashboard/admin/account"
             element={
               <ProtectedRoute allowRoles={["admin"]}>
-                <AccountPage />
+                  <Suspense fallback={<DashboardLoading />}><AccountPage /></Suspense>
               </ProtectedRoute>
             }
           />
@@ -67,11 +71,10 @@ const App = () => (
             path="/dashboard/staff/account"
             element={
               <ProtectedRoute allowRoles={["staff"]}>
-                <AccountPage />
+                  <Suspense fallback={<DashboardLoading />}><AccountPage /></Suspense>
               </ProtectedRoute>
             }
           />
-          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

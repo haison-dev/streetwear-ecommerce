@@ -4,11 +4,11 @@ import { queryKeys } from "@/lib/queryKeys";
 
 export const useFeaturedProductsQuery = () =>
   useQuery({
-    queryKey: queryKeys.products({ featured: true, sort: "newest", limit: 4 }),
+    queryKey: queryKeys.products({ featured: true, sort: "newest", limit: 8 }),
     queryFn: () =>
       productService.list({
         sort: "newest",
-        limit: 4,
+        limit: 8,
         status: "active",
       }),
     staleTime: 5 * 60 * 1000,

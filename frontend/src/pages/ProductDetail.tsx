@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Star, Minus, Plus, ChevronRight } from "lucide-react";
+import { Star, Minus, Plus, ChevronRight, Heart } from "lucide-react";
 import { toast } from "sonner";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
-import LoginPanel from "@/components/auth/LoginPanel";
+import { useStorefront } from "@/hooks/useStorefront";
+import { useAddWishlistItemMutation, useRemoveWishlistItemMutation, useWishlistQuery } from "@/hooks/useWishlistQueries";
+import { formatVnd } from "@/lib/money";
+import { getErrorMessage } from "@/lib/apiError";
+import type { Variant } from "@/types";
 import { useProductDetailQuery } from "@/hooks/useProductDetailQuery";
 import { useAddToCartMutation } from "@/hooks/useCartQueries";
 import { useCreateReviewMutation, useProductReviewsQuery } from "@/hooks/useReviewQueries";
 import { useAuthStore } from "@/stores/useAuthStore";
+
+const stockOf = (variant: Variant) => variant.inventory?.available ?? variant.stock ?? 0;
 
 const ProductDetail = () => {
   const { slug } = useParams();
@@ -22,43 +26,40 @@ const ProductDetail = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
-  const [loginPanelOpen, setLoginPanelOpen] = useState(false);
+  const { openLogin } = useStorefront();
+  const wishlist = useWishlistQuery();
+  const addSaved = useAddWishlistItemMutation();
+  const removeSaved = useRemoveWishlistItemMutation();
+  const saved = wishlist.data?.items.some(({ productId }) =>
+    (typeof productId === "string" ? productId : productId._id) === product?._id
+  ) ?? false;
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
 
   const variants = useMemo(() => product?.variants || [], [product]);
-  const selectedVariantData = useMemo(
-    () => variants.find((v) => v._id === selectedVariant),
-    [variants, selectedVariant],
-  );
-  const available = selectedVariantData?.inventory?.available ?? selectedVariantData?.stock ?? 0;
+  const selectedVariantData = variants.find((variant) => variant._id === selectedVariant)
+    ?? variants.find((variant) => stockOf(variant) > 0)
+    ?? variants[0];
+  const available = selectedVariantData ? stockOf(selectedVariantData) : 0;
+  const colors = [...new Set(variants.map((variant) => variant.color))];
+  const sizes = variants.filter((variant) => variant.color === selectedVariantData?.color);
   const reviewsQuery = useProductReviewsQuery(product?._id, {
     page: 1,
     limit: 6,
     sort: "newest",
   });
-  const formatVnd = (value: number) => `${value.toLocaleString("vi-VN")} đ`;
-
-  useEffect(() => {
-    if (variants.length && !selectedVariant) {
-      const firstInStock = variants.find(
-        (variant) => (variant.inventory?.available ?? variant.stock ?? 0) > 0,
-      );
-      if (firstInStock) setSelectedVariant(firstInStock._id);
-    }
-  }, [variants, selectedVariant]);
 
   useEffect(() => {
     if (available <= 0) return;
     setQuantity((q) => Math.max(1, Math.min(q, available)));
   }, [available]);
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <p className="store-container py-28" role="status">Loading product…</p>;
 
   if (!product || isError) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
+      <div className="bg-background">
+
         <div className="pt-32 text-center">
           <h1 className="font-display text-5xl">Product Not Found</h1>
           <Link to="/shop" className="font-body text-sm underline mt-4 inline-block">
@@ -68,6 +69,25 @@ const ProductDetail = () => {
       </div>
     );
   }
+
+  const price = selectedVariantData?.price ?? product.salePrice ?? product.price;
+  const chooseColor = (color: string) => {
+    const matching = variants.filter((variant) => variant.color === color);
+    const next = matching.find((variant) => variant.size === selectedVariantData?.size && stockOf(variant) > 0)
+      ?? matching.find((variant) => stockOf(variant) > 0)
+      ?? matching[0];
+    if (next) setSelectedVariant(next._id);
+  };
+
+  const toggleSaved = async () => {
+    if (!token) { openLogin(); return; }
+    try {
+      await (saved ? removeSaved : addSaved).mutateAsync(product._id);
+      toast.success(saved ? "Removed from saved items" : "Saved to your wishlist");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Could not update saved items"));
+    }
+  };
 
   const increaseQty = () => {
     setQuantity((q) => Math.min(q + 1, available || 1));
@@ -79,7 +99,7 @@ const ProductDetail = () => {
 
   const handleAddToCart = async () => {
     if (!token) {
-      setLoginPanelOpen(true);
+      openLogin();
       return;
     }
     if (!selectedVariantData) {
@@ -113,7 +133,7 @@ const ProductDetail = () => {
 
   const handleSubmitReview = async () => {
     if (!token) {
-      setLoginPanelOpen(true);
+      openLogin();
       return;
     }
 
@@ -139,10 +159,10 @@ const ProductDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <div className="bg-background">
 
-      <div className="mx-auto w-full max-w-[1200px] px-4 md:px-8 py-8">
+
+      <div className="mx-auto w-full max-w-[1200px] px-4 md:px-8 pt-28 pb-12">
         <div className="flex items-center gap-2 font-body text-xs text-muted-foreground uppercase tracking-wider mb-8">
           <Link to="/shop" className="hover:text-foreground transition-colors">
             Shop
@@ -198,24 +218,21 @@ const ProductDetail = () => {
           >
             <div>
               <p className="font-body text-xs text-muted-foreground uppercase tracking-widest mb-1">
-                {product.brandId.name}
+                {product.brandId?.name}
               </p>
-              <h1 className="font-display text-4xl md:text-5xl">{product.name}</h1>
+              <h1 className="store-title">{product.name}</h1>
             </div>
 
             <div className="flex items-center gap-3">
-              {product.salePrice ? (
-                <>
-                  <span className="font-body text-2xl font-semibold">{formatVnd(product.salePrice)}</span>
-                  <span className="font-body text-lg text-muted-foreground line-through">
-                    {formatVnd(product.price)}
-                  </span>
-                </>
-              ) : (
-                <span className="font-body text-2xl font-semibold">{formatVnd(product.price)}</span>
-              )}
+              <span className="text-2xl font-bold">{formatVnd(price)}</span>
+              {price < product.price && <span className="text-muted-foreground line-through">{formatVnd(product.price)}</span>}
+              <button type="button" className="ml-auto border border-border p-3 hover:bg-secondary"
+                aria-label={saved ? "Remove from saved items" : "Save item"} aria-pressed={saved}
+                disabled={addSaved.isPending || removeSaved.isPending || Boolean(token && wishlist.isFetching)}
+                onClick={() => void toggleSaved()}>
+                <Heart size={19} className={saved ? "fill-current" : ""} />
+              </button>
             </div>
-
             <div className="flex items-center gap-2">
               <div className="flex">
                 {[1, 2, 3, 4, 5].map((r) => (
@@ -237,42 +254,42 @@ const ProductDetail = () => {
 
             <p className="font-body text-sm text-muted-foreground leading-relaxed">{product.description}</p>
 
-            <div>
-              <h3 className="font-body text-sm font-semibold mb-3">Size</h3>
-              <div className="flex flex-wrap gap-2">
-                {variants.map((variant) => {
-                  const inStock = (variant.inventory?.available ?? variant.stock ?? 0) > 0;
-                  return (
-                    <button
-                      key={variant._id}
-                      onClick={() => setSelectedVariant(variant._id)}
-                      disabled={!inStock}
-                      className={`px-5 py-2.5 rounded-lg border font-body text-sm transition-colors ${
-                        selectedVariant === variant._id
-                          ? "border-foreground bg-foreground text-background"
-                          : !inStock
-                            ? "border-border text-muted-foreground opacity-40 cursor-not-allowed"
-                            : "border-border hover:border-foreground"
-                      }`}
-                    >
-                      {variant.size}
+            {colors.length > 0 && (
+              <fieldset className="space-y-2">
+                <legend className="store-label">Color</legend>
+                <div className="flex flex-wrap gap-2">
+                  {colors.map((color) => (
+                    <button type="button" key={color} aria-pressed={selectedVariantData?.color === color}
+                      onClick={() => chooseColor(color)}
+                      className="min-h-11 border border-border px-4 text-sm hover:border-foreground aria-pressed:border-foreground aria-pressed:bg-primary">
+                      {color || "Default"}
                     </button>
-                  );
-                })}
-              </div>
-              {selectedVariantData && (
-                <p className="font-body text-xs text-muted-foreground mt-2">{available} in stock</p>
-              )}
-            </div>
+                  ))}
+                </div>
+              </fieldset>
+            )}
 
+            <fieldset className="space-y-2">
+              <legend className="store-label">Size</legend>
+              <div className="flex flex-wrap gap-2">
+                {sizes.map((variant) => (
+                  <button type="button" key={variant._id} aria-pressed={selectedVariantData?._id === variant._id}
+                    disabled={stockOf(variant) <= 0} onClick={() => setSelectedVariant(variant._id)}
+                    className="min-h-11 min-w-11 border border-border px-3 text-sm hover:border-foreground disabled:opacity-45 aria-pressed:border-foreground aria-pressed:bg-primary">
+                    {variant.size}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">{available > 0 ? `${available} in stock` : "Out of stock"}</p>
+            </fieldset>
             <div className="flex items-center gap-3">
               <div className="flex items-center border border-border rounded-lg">
-                <button onClick={decreaseQty} className="p-3 hover:bg-secondary transition-colors">
+                <button onClick={decreaseQty} aria-label="Decrease quantity" className="p-3 hover:bg-secondary transition-colors">
                   <Minus size={16} />
                 </button>
                 <span className="px-4 font-body text-sm min-w-[3rem] text-center">{quantity}</span>
                 <button
-                  onClick={increaseQty}
+                  onClick={increaseQty} aria-label="Increase quantity"
                   disabled={!!selectedVariantData && quantity >= available}
                   className="p-3 hover:bg-secondary transition-colors disabled:opacity-40"
                 >
@@ -281,19 +298,17 @@ const ProductDetail = () => {
               </div>
 
               <button
-                disabled={!selectedVariant || addToCartMutation.isPending || available <= 0}
+                disabled={addToCartMutation.isPending || available <= 0}
                 onClick={handleAddToCart}
                 className={`flex-1 py-3 rounded-lg font-body text-sm tracking-wider transition-colors ${
-                  selectedVariant && available > 0
-                    ? "bg-foreground text-background hover:bg-foreground/90"
+                  available > 0
+                    ? "bg-primary text-primary-foreground hover:bg-foreground hover:text-background"
                     : "bg-secondary text-muted-foreground cursor-not-allowed"
                 }`}
               >
                 {addToCartMutation.isPending
                   ? "Adding..."
-                  : selectedVariant
-                    ? "Add to Cart"
-                    : "Select Size"}
+                  : available > 0 ? "Add to bag" : "Out of stock"}
               </button>
             </div>
           </motion.div>
@@ -406,9 +421,6 @@ const ProductDetail = () => {
           </div>
         </section>
       </div>
-
-      <Footer />
-      <LoginPanel open={loginPanelOpen} onClose={() => setLoginPanelOpen(false)} />
     </div>
   );
 };

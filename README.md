@@ -58,7 +58,7 @@ Full-stack e-commerce application for a streetwear storefront, with a React/Vite
 
 - Node.js 20 or newer is recommended.
 - npm
-- MongoDB connection string
+- MongoDB connection string. Checkout and fulfillment use transactions and require a replica set, including for local development.
 - Cloudinary account for upload features
 - VNPay sandbox/live credentials if testing online payment
 
@@ -142,7 +142,10 @@ npm test
 npm run seed:payment-permissions
 npm run seed:collections
 npm run seed:demo-products
+npm run seed:lookbook
 ```
+
+`seed:lookbook` adds demo menswear with on-model photography, sizes, and sample inventory to the local database. Product records reference the photos in `frontend/public/lookbook`. Running the seed again preserves existing product and inventory values.
 
 Frontend:
 
@@ -167,6 +170,13 @@ npm test
 ```
 
 ## API Overview
+
+### Storefront and order fulfillment
+
+- `frontend/src/index.css` defines shared theme tokens and storefront styles. `StorefrontLayout` owns storefront navigation, footer, and sign-in.
+- The Shop URL stores catalog filters so collection and search links can be shared. The catalog and collection APIs use the same filter rules.
+- Checkout requests `POST /api/orders/quote` with `city` and `couponCode`. The authenticated quote uses the cart and returns `itemsPrice`, `shippingFee`, `discount`, and `totalPrice`. Order submission can pass `expectedTotal` to detect a price change before checkout.
+- Customers access their own purchases through `/account/orders`. Staff use `/dashboard/staff` for fulfillment. The backend checks `read:order` or `write:order` for the operations list and `write:order` for status updates.
 
 Backend routes are mounted under `/api`. Main modules include:
 

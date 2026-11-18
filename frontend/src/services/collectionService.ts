@@ -1,5 +1,6 @@
 import api from "@/lib/axios";
 import type { Collection, Product } from "@/types";
+import type { ListProductsParams } from "./productService";
 
 export interface ListCollectionsParams {
   status?: "active" | "inactive" | "all";
@@ -20,7 +21,7 @@ export const collectionService = {
   },
   listProductsBySlug: async (
     slug: string,
-    params?: { page?: number; limit?: number; sort?: string },
+    params?: ListProductsParams,
   ): Promise<{
     collection: Collection;
     products: Product[];

@@ -1,13 +1,12 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { EyeIcon } from "lucide-react"
 import { useAuthStore } from "@/stores/useAuthStore"
 import { getRoleNames } from "@/lib/roles"
-import googleLogo from "@/assets/google-logo.webp"
-import Footer from "@/components/layout/Footer"
+import { useStorefront } from "@/hooks/useStorefront"
 
 const Register = () => {
   const navigate = useNavigate()
+  const { openLogin } = useStorefront()
   const register = useAuthStore((state) => state.register)
   const loading = useAuthStore((state) => state.loading)
 
@@ -45,90 +44,79 @@ const Register = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f6f6] text-foreground">
-      <div className="mx-auto max-w-7xl px-6 pb-16 pt-12 md:px-12">
+    <div className="bg-background text-foreground">
+      <div className="mx-auto max-w-7xl px-6 pb-16 pt-28 md:px-12">
         <div className="mb-8 flex items-center justify-between gap-3">
-          <h1 className="font-display text-3xl tracking-wide md:text-4xl">Create Your Account</h1>
+          <h1 className="store-title">Create Your Account</h1>
           <Link to="/" className="text-sm underline underline-offset-4 hover:opacity-70">
             Back to Home
           </Link>
         </div>
 
-        <div className="rounded-2xl border border-border/70 bg-background/60 p-5 md:p-8">
-          <button
-            type="button"
-            className="mb-6 flex h-12 w-full items-center justify-center gap-2 rounded-full border border-border text-sm font-medium transition-colors hover:bg-secondary"
-          >
-            <img src={googleLogo} alt="Google" className="size-4" />
-            Sign In With Google
-          </button>
-
-          <p className="mb-2 text-sm text-muted-foreground">
+        <div className="store-panel p-5 md:p-8">
+<p className="mb-2 text-sm text-muted-foreground">
             Create your account to have access to a personalized experience.
           </p>
           <p className="mb-8 text-sm">
             Already have an account?{" "}
-            <Link to="/" className="underline underline-offset-4">
-              Log in here.
-            </Link>
+            <button type="button" className="underline underline-offset-4" onClick={openLogin}>Sign in</button>
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid gap-5 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Email*</label>
-                <input
+                <label htmlFor="register-email" className="text-sm font-medium">Email*</label>
+                <input id="register-email"
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  className="h-12 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
+                  className="store-field"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">First Name*</label>
-                <input
+                <label htmlFor="register-firstName" className="text-sm font-medium">First Name*</label>
+                <input id="register-firstName"
                   type="text"
                   value={firstName}
                   onChange={(event) => setFirstName(event.target.value)}
-                  className="h-12 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
+                  className="store-field"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Password*</label>
+                <label htmlFor="register-password" className="text-sm font-medium">Password*</label>
                 <div className="relative">
-                  <input
+                  <input id="register-password"
                     type="password"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
-                    className="h-12 w-full rounded-md border border-border bg-background px-3 pr-10 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
+                    className="store-field"
                     required
                   />
-                  <EyeIcon className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Last Name*</label>
-                <input
+                <label htmlFor="register-lastName" className="text-sm font-medium">Last Name*</label>
+                <input id="register-lastName"
                   type="text"
                   value={lastName}
                   onChange={(event) => setLastName(event.target.value)}
-                  className="h-12 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
+                  className="store-field"
                   required
                 />
               </div>
 
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium">Phone Number</label>
-                <input
+                <label htmlFor="register-phone" className="text-sm font-medium">Phone Number</label>
+                <input id="register-phone"
                   type="tel"
                   value={phone}
                   onChange={(event) => setPhone(event.target.value)}
-                  className="h-12 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-foreground/20"
+                  className="store-field"
                   placeholder="xxx.xxx.xxxx"
                 />
               </div>
@@ -138,7 +126,7 @@ const Register = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="h-12 rounded-full bg-foreground px-8 text-sm font-medium text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="store-action disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? "Creating account..." : "Create my account"}
               </button>
@@ -146,7 +134,7 @@ const Register = () => {
           </form>
         </div>
       </div>
-      <Footer />
+
     </div>
   )
 }
