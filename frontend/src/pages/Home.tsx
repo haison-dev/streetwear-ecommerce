@@ -1,19 +1,13 @@
-import Navbar from '@/components/layout/Navbar';
-import HeroSlider from '@/components/HeroSlider';
+import HomeRack from '@/components/home/HomeRack';
 import FeaturedProducts from '@/components/FeaturedProducts';
 import ShopCategories from '@/components/ShopCategories';
-import Footer from '@/components/layout/Footer';
 
-const Home = () => {
+export default function Home() {
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <HeroSlider />
-      <ShopCategories />
+    <>
+      <HomeRack />
       <FeaturedProducts />
-      <Footer />
-    </div>  
-  ) 
+      <ShopCategories />
+    </>
+  );
 }
-
-export default Home

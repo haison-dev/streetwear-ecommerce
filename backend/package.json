@@ -8,7 +8,8 @@
     "test": "node tests/order-cart-flow.test.js && node tests/payment-flow.test.js",
     "seed:payment-permissions": "node src/scripts/seed-payment-permissions.js",
     "seed:collections": "node src/scripts/seed-collections.js",
-    "seed:demo-products": "node src/scripts/seed-demo-products.js"
+    "seed:demo-products": "node src/scripts/seed-demo-products.js",
+    "seed:lookbook": "node src/scripts/seed-lookbook.js"
   },
   "type": "module",
   "keywords": [],

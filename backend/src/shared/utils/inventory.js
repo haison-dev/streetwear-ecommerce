@@ -1,7 +1,7 @@
 import Inventory from '../../models/Inventory.js';
 
 export const getRealAvailable = (inventory) =>
-  Math.max(0, (inventory?.available || 0) - (inventory?.reserved || 0));
+  Math.max(0, inventory?.available || 0);
 
 export const reserveStock = async (variantId, quantity, session = null) => {
   const res = await Inventory.updateOne(

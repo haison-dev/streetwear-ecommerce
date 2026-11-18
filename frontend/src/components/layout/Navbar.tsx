@@ -1,9 +1,8 @@
 import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { Search, ShoppingBag, Menu, X, User, ChevronDown, LogOut, UserRound } from 'lucide-react';
+import { Search, ShoppingBag, Menu, X, User, ChevronDown, LogOut, UserRound, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import LoginPanel from '@/components/auth/LoginPanel';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,25 +15,17 @@ import { useCartQuery } from '@/hooks/useCartQueries';
 import { useCollectionsQuery } from '@/hooks/useCollectionQueries';
 import { queryKeys } from '@/lib/queryKeys';
 
-import productVinyl1 from '@/assets/product-vinyl-1.jpg';
-import productTee1 from '@/assets/product-tee-1.jpg';
-import productAccessory1 from '@/assets/product-accessory-1.jpg';
-import productJersey1 from '@/assets/product-jersey-1.jpg';
-import productMug1 from '@/assets/product-mug-1.jpg';
-
 const fallbackCollectionImages = [
-  productVinyl1,
-  productTee1,
-  productAccessory1,
-  productJersey1,
-  productMug1,
+  '/lookbook/boxy-tee-bone.jpg',
+  '/lookbook/heavyweight-hoodie-charcoal.jpg',
+  '/lookbook/utility-cargo-olive.jpg',
+  '/lookbook/work-jacket-rust.jpg',
 ];
 
-const Navbar = () => {
+const Navbar = ({ onLogin }: { onLogin: () => void }) => {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);
-  const [loginOpen, setLoginOpen] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const queryClient = useQueryClient();
   const { token, user, logout } = useAuthStore();
@@ -99,23 +90,26 @@ const Navbar = () => {
         </div>
 
         {/* Mobile hamburger */}
-        <button className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
+        <button className="md:hidden" type="button" aria-label="Menu" aria-expanded={mobileOpen} onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
 
         {/* Center logo */}
         <div className="flex-1 flex justify-center">
-          <Link to="/" className="font-display text-3xl tracking-wider">
+          <Link to="/" className="font-brand text-3xl tracking-wider">
             CROWNLINE
           </Link>
         </div>
 
         {/* Right icons */}
-        <div className="flex items-center gap-5 flex-1 justify-end">
-          <Link to="/shop" className="hover:opacity-60 transition-opacity">
+        <div className="flex items-center gap-3 sm:gap-5 flex-1 justify-end">
+          <Link to="/shop" aria-label="Search products" className="hidden min-[390px]:block hover:opacity-60 transition-opacity">
             <Search size={20} />
           </Link>
-          <Link to="/cart" className="relative hover:opacity-60 transition-opacity">
+          <Link to="/account/wishlist" aria-label="Saved items" className="hidden min-[390px]:block hover:opacity-60 transition-opacity">
+            <Heart size={20} />
+          </Link>
+          <Link to="/cart" aria-label={`Shopping bag, ${cartCount} items`} className="relative hover:opacity-60 transition-opacity">
             <ShoppingBag size={20} />
             <span className="absolute -top-1.5 -right-1.5 bg-foreground text-background text-[10px] font-body font-semibold rounded-full w-4 h-4 flex items-center justify-center">
               {cartCount > 99 ? "99+" : cartCount}
@@ -129,8 +123,9 @@ const Navbar = () => {
                   className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm font-body hover:bg-secondary transition-colors"
                   aria-label="Open user menu"
                 >
-                  <span className="max-w-32 truncate">{displayName}</span>
-                  <ChevronDown size={16} />
+                  <UserRound size={18} className="sm:hidden" aria-hidden="true" />
+                  <span className="hidden max-w-32 truncate sm:inline">{displayName}</span>
+                  <ChevronDown size={16} className="hidden sm:block" aria-hidden="true" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" sideOffset={8} className="w-44">
@@ -147,8 +142,10 @@ const Navbar = () => {
                     onSelect={() => {
                       void (async () => {
                         await logout();
-                        await queryClient.cancelQueries({ queryKey: queryKeys.cart });
-                        queryClient.removeQueries({ queryKey: queryKeys.cart });
+                        for (const queryKey of [queryKeys.cart, queryKeys.wishlist, ["orders"], ["payments"], ["admin"]]) {
+                          await queryClient.cancelQueries({ queryKey });
+                          queryClient.removeQueries({ queryKey });
+                        }
                         navigate('/', { replace: true });
                       })();
                     }}
@@ -160,7 +157,7 @@ const Navbar = () => {
             </DropdownMenu>
           ) : (
             <button
-              onClick={() => setLoginOpen(true)}
+              onClick={onLogin}
               className="hover:opacity-60 transition-opacity"
               aria-label="Open login panel"
             >
@@ -243,12 +240,12 @@ const Navbar = () => {
             <div className="flex flex-col gap-4 p-6 font-body text-sm">
               <Link to="/" onClick={() => setMobileOpen(false)}>Home</Link>
               <Link to="/shop" onClick={() => setMobileOpen(false)}>Shop</Link>
+              <Link to="/account/wishlist" onClick={() => setMobileOpen(false)}>Saved items</Link>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <LoginPanel open={loginOpen} onClose={() => setLoginOpen(false)} />
     </nav>
   );
 };

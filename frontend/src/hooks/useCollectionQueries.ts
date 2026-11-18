@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { collectionService } from "@/services/collectionService";
+import type { ListProductsParams } from "@/services/productService";
 
 export const useCollectionsQuery = () =>
   useQuery({
@@ -22,7 +23,7 @@ export const useCollectionBySlugQuery = (slug?: string) =>
 
 export const useCollectionProductsQuery = (
   slug?: string,
-  params?: { page?: number; limit?: number; sort?: string },
+  params?: ListProductsParams,
 ) =>
   useQuery({
     queryKey: ["collections", "slug", slug, "products", params || {}],

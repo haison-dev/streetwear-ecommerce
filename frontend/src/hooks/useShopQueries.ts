@@ -45,7 +45,7 @@ export const useProductStatsQuery = (q: string, categoryId: string, brandId: str
       }),
   });
 
-export const useProductsQuery = (filters: ShopFilters) =>
+export const useProductsQuery = (filters: ShopFilters, enabled = true) =>
   useQuery({
     queryKey: queryKeys.products(filters),
     queryFn: () =>
@@ -62,13 +62,14 @@ export const useProductsQuery = (filters: ShopFilters) =>
         status: "active",
       }),
     placeholderData: keepPreviousData,
+    enabled,
   });
 
-export const useShopQueries = (filters: ShopFilters) => {
+export const useShopQueries = (filters: ShopFilters, listAll = true) => {
   const categoriesQuery = useCategoriesQuery();
   const brandsQuery = useBrandsQuery();
   const statsQuery = useProductStatsQuery(filters.q, filters.categoryId, filters.brandId);
-  const productsQuery = useProductsQuery(filters);
+  const productsQuery = useProductsQuery(filters, listAll);
 
   const stats = useMemo(() => {
     if (!statsQuery.data) return { minPrice: 0, maxPrice: 0 };

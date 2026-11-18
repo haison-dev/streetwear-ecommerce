@@ -1,7 +1,5 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,19 +21,10 @@ import { useOrdersQuery } from "@/hooks/useOrderQueries";
 import { useCreateVnpayCheckoutMutation } from "@/hooks/usePaymentQueries";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { toast } from "sonner";
+import { useStorefront } from "@/hooks/useStorefront";
+import { formatVnd } from "@/lib/money";
 
 type OrderStatus = "all" | "pending" | "confirmed" | "shipping" | "delivered" | "cancelled";
-type OrderListItem = {
-  _id: string;
-  orderNumber?: string;
-  createdAt?: string;
-  totalPrice?: number;
-  paymentStatus?: string;
-  status?: string;
-  paymentMethod?: string;
-  paymentId?: string;
-};
-
 const badgeVariant = (value?: string) => {
   const normalized = String(value || "").toLowerCase();
   if (normalized === "paid" || normalized === "delivered") return "default" as const;
@@ -46,6 +35,7 @@ const badgeVariant = (value?: string) => {
 };
 
 const MyOrdersPage = () => {
+  const { openLogin } = useStorefront();
   const token = useAuthStore((state) => state.token);
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<OrderStatus>("all");
@@ -64,16 +54,14 @@ const MyOrdersPage = () => {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <div className="pt-28 max-w-4xl mx-auto px-4 md:px-8">
-          <h1 className="font-display text-4xl mb-4">My Orders</h1>
+      <div className="bg-background">
+
+        <div className="pt-28 pb-16 max-w-4xl mx-auto px-4 md:px-8">
+          <h1 className="store-title mb-4">My Orders</h1>
           <p className="text-muted-foreground mb-6">Please login to view your orders.</p>
-          <Link to="/" className="underline">
-            Back to home
-          </Link>
+          <button type="button" className="store-action" onClick={openLogin}>Sign in</button>
         </div>
-        <Footer />
+
       </div>
     );
   }
@@ -111,11 +99,11 @@ const MyOrdersPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="pt-28 pb-16 max-w-6xl mx-auto px-4 md:px-8">
+    <div className="bg-background">
+
+      <div className="store-container pt-28 pb-16">
         <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <h1 className="font-display text-4xl">My Orders</h1>
+          <h1 className="store-title">My Orders</h1>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Status</span>
             <Select
@@ -152,7 +140,7 @@ const MyOrdersPage = () => {
             </Link>
           </div>
         ) : (
-          <div className="rounded-xl border">
+          <div className="border border-border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -165,15 +153,15 @@ const MyOrdersPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orders.map((order: OrderListItem) => (
+                {orders.map((order) => (
                   <TableRow key={order._id}>
                     <TableCell className="font-medium">
-                      {order.orderNumber || String(order._id).slice(-8)}
+                      <Link className="font-bold hover:underline" to={`/account/orders/${order._id}`}>{order.orderNumber || order._id.slice(-8)}</Link>
                     </TableCell>
                     <TableCell>
                       {order.createdAt ? new Date(order.createdAt).toLocaleString() : "-"}
                     </TableCell>
-                    <TableCell>{Number(order.totalPrice || 0).toLocaleString("vi-VN")} đ</TableCell>
+                    <TableCell>{formatVnd(order.totalPrice ?? 0)}</TableCell>
                     <TableCell>
                       <Badge variant={badgeVariant(order.paymentStatus)}>
                         {order.paymentStatus || "pending"}
@@ -184,7 +172,7 @@ const MyOrdersPage = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       {String(order.paymentMethod || "").toLowerCase() === "vnpay" &&
-                      String(order.paymentStatus || "").toLowerCase() === "pending" &&
+                      ["pending", "failed"].includes(order.paymentStatus) &&
                       String(order.status || "").toLowerCase() !== "cancelled" ? (
                         <Button
                           size="sm"
@@ -221,7 +209,7 @@ const MyOrdersPage = () => {
           </div>
         )}
       </div>
-      <Footer />
+
     </div>
   );
 };

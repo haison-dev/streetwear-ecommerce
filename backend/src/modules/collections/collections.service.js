@@ -1,5 +1,6 @@
 import { normalizeString, toNumber } from "../../shared/utils/normalize.js";
 import { makeError } from "../../shared/errors/index.js";
+import { buildProductFilter } from "../products/domain/product-filter.js";
 import {
   countCollections,
   countProductsByCollectionFilter,
@@ -100,7 +101,9 @@ export const listCollectionProductsService = async ({ slug, query = {} }) => {
   const sortKey = normalizeString(sort) || collection.criteria?.sort || "newest";
   const sortBy = PRODUCT_SORT_MAP[sortKey] || PRODUCT_SORT_MAP.newest;
 
-  const filter = buildCollectionProductFilter(collection);
+  const filter = {
+    $and: [buildCollectionProductFilter(collection), buildProductFilter({ ...query, status: "active" })],
+  };
   const [products, total] = await Promise.all([
     findProductsByCollectionFilter({ filter, sortBy, skip, limit: safeLimit }),
     countProductsByCollectionFilter(filter),

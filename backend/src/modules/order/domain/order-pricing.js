@@ -1,7 +1,14 @@
 import { makeError } from "../../../shared/errors/index.js";
 import { COUPON_RULES, SHIPPING_RULES } from "../config/order-rules.js";
 
-const normalizeText = (value) => String(value || "").trim().toLowerCase();
+const normalizeText = (value) => String(value || "")
+  .normalize("NFD")
+  .replace(/\p{Diacritic}/gu, "")
+  .toLowerCase()
+  .replace(/đ/g, "d")
+  .trim()
+  .replace(/^(tp\.?|thanh pho)\s+/, "")
+  .replace(/\s+/g, " ");
 
 export const computeItemsPrice = (orderItems = []) =>
   orderItems.reduce(

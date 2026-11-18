@@ -1,8 +1,7 @@
-﻿import mongoose from "mongoose";
+import mongoose from "mongoose";
 import {
   normalizeString,
   slugify,
-  toNumber,
 } from "../../shared/utils/normalize.js";
 import { normalizeOptionalId } from "../../shared/utils/query.js";
 import {
@@ -18,6 +17,7 @@ import {
   updateProductById,
 } from "./products.repository.js";
 import { makeError } from "../../shared/errors/index.js";
+import { buildProductFilter } from "./domain/product-filter.js";
 
 const isObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
 
@@ -43,53 +43,8 @@ const attachVariantsWithInventory = async (product) => {
 };
 
 export const listProducts = async (query = {}) => {
-  const {
-    q,
-    categoryId,
-    brandId,
-    status = "active",
-    minPrice,
-    maxPrice,
-    minRating,
-    page = 1,
-    limit = 20,
-    sort = "newest",
-  } = query;
-
-  const filter = {};
-  if (status && status !== "all") filter.status = status;
-  const queryText = normalizeString(q);
-  if (queryText) filter.name = { $regex: queryText, $options: "i" };
-
-  const normalizedCategoryId = normalizeOptionalId(categoryId);
-  const normalizedBrandId = normalizeOptionalId(brandId);
-  if (normalizedCategoryId) {
-    if (!isObjectId(normalizedCategoryId))
-      throw makeError(400, "Invalid categoryId");
-    filter.categoryId = normalizedCategoryId;
-  }
-  if (normalizedBrandId) {
-    if (!isObjectId(normalizedBrandId)) throw makeError(400, "Invalid brandId");
-    filter.brandId = normalizedBrandId;
-  }
-
-  const min = toNumber(minPrice);
-  const max = toNumber(maxPrice);
-  if (minPrice !== undefined && min === undefined)
-    throw makeError(400, "Invalid minPrice");
-  if (maxPrice !== undefined && max === undefined)
-    throw makeError(400, "Invalid maxPrice");
-  if (min !== undefined || max !== undefined) {
-    filter.price = {};
-    if (min !== undefined) filter.price.$gte = min;
-    if (max !== undefined) filter.price.$lte = max;
-  }
-
-  const minR = toNumber(minRating);
-  if (minRating !== undefined && minR === undefined)
-    throw makeError(400, "Invalid minRating");
-  if (minR !== undefined) filter.rating = { $gte: minR };
-
+  const { page = 1, limit = 20, sort = "newest" } = query;
+  const filter = buildProductFilter(query);
   const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100);
   const safePage = Math.max(parseInt(page, 10) || 1, 1);
   const skip = (safePage - 1) * safeLimit;
